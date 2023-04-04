@@ -467,6 +467,28 @@ struct Fuego
     dpdr_e = P / R;
   }
 
+  AMREX_GPU_HOST_DEVICE
+  AMREX_NO_INLINE
+  static void RTY2HiFusedOutputCYOrder(
+    const amrex::Real* rYs, amrex::Real* cdots_pt, amrex::Real* ydot_d,
+    amrex::Real rhoesrc, amrex::Real rho_pt_inv, amrex::Real Cv_pt,
+    amrex::Real temp_pt, int icell, int ncells)
+  {
+    RTY2HiFusedOutputCYOrderGenerated(rYs, cdots_pt, ydot_d, rhoesrc,
+				      rho_pt_inv, Cv_pt, temp_pt, icell, ncells);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_NO_INLINE
+  static void RTY2HiFusedOutputYCOrder(
+    const amrex::Real* rYs, amrex::Real* cdots_pt, amrex::Real* ydot_d,
+    amrex::Real rhoesrc, amrex::Real rho_pt_inv, amrex::Real Cv_pt,
+    amrex::Real temp_pt, int icell, int ncells)
+  {
+    RTY2HiFusedOutputYCOrderGenerated(rYs, cdots_pt, ydot_d, rhoesrc,
+				      rho_pt_inv, Cv_pt, temp_pt, icell, ncells);
+  }
+
   template <class... Args>
   AMREX_GPU_HOST_DEVICE explicit Fuego(Args... /*unused*/)
   {
