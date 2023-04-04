@@ -350,25 +350,23 @@ fKernelSpecH(
   amrex::Real temp_pt =
     yvec_d[vec_index<OrderType>(NUM_SPECIES, icell, ncells)];
 
+
   amrex::Real Cv_pt = 0.0;
-  amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
   auto eos = pele::physics::PhysicsType::eos();
   eos.RHY2T(rho_pt, nrg_pt, massfrac.arr, temp_pt);
-  eos.RTY2Hi(rho_pt, temp_pt, massfrac.arr, ei_pt.arr);
   eos.RTY2Cp(rho_pt, temp_pt, massfrac.arr, Cv_pt);
 
   amrex::GpuArray<amrex::Real, NUM_SPECIES> cdots_pt = {0.0};
   eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
 
   amrex::Real rhoesrc = rhoesrc_ext[icell];
-  for (int n = 0; n < NUM_SPECIES; n++) {
-    const amrex::Real cdot_rYs =
-      cdots_pt[n] + rYs[spec_index<OrderType>(n, icell, ncells)];
-    ydot_d[vec_index<OrderType>(n, icell, ncells)] = cdot_rYs;
-    rhoesrc -= cdot_rYs * ei_pt[n];
-  }
-  ydot_d[vec_index<OrderType>(NUM_SPECIES, icell, ncells)] =
-    rhoesrc * (rho_pt_inv / Cv_pt);
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
+  eos.RTY2HiFusedOutputCYOrder(rYs, cdots_pt.arr, ydot_d, rhoesrc, rho_pt_inv,
+			       Cv_pt, temp_pt, icell, ncells);
+#else
+  eos.RTY2HiFusedOutputYCOrder(rYs, cdots_pt.arr, ydot_d, rhoesrc, rho_pt_inv,
+  			       Cv_pt, temp_pt, icell, ncells);
+#endif
 }
 
 
