@@ -270,6 +270,110 @@ public:
 
 template <typename OrderType>
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
+fKernelSpecE(
+  const int icell,
+  const int ncells,
+  const amrex::Real dt_save,
+  const amrex::Real* yvec_d,
+  amrex::Real* ydot_d, // NOLINT(readability-non-const-parameter)
+  const amrex::Real* rhoe_init,
+  const amrex::Real* rhoesrc_ext,
+  const amrex::Real* rYs)
+{
+  amrex::Real rho_pt = 0.0;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    massfrac[n] = yvec_d[vec_index<OrderType>(n, icell, ncells)];
+    rho_pt += massfrac[n];
+  }
+  const amrex::Real rho_pt_inv = 1.0 / rho_pt;
+
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    massfrac[n] *= rho_pt_inv;
+  }
+
+  const amrex::Real nrg_pt =
+    (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) * rho_pt_inv;
+
+  amrex::Real temp_pt =
+    yvec_d[vec_index<OrderType>(NUM_SPECIES, icell, ncells)];
+
+  amrex::Real Cv_pt = 0.0;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
+  auto eos = pele::physics::PhysicsType::eos();
+  eos.REY2T(rho_pt, nrg_pt, massfrac.arr, temp_pt);
+  eos.RTY2Ei(rho_pt, temp_pt, massfrac.arr, ei_pt.arr);
+  eos.RTY2Cv(rho_pt, temp_pt, massfrac.arr, Cv_pt);
+
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> cdots_pt = {0.0};
+  eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
+
+  amrex::Real rhoesrc = rhoesrc_ext[icell];
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    const amrex::Real cdot_rYs =
+      cdots_pt[n] + rYs[spec_index<OrderType>(n, icell, ncells)];
+    ydot_d[vec_index<OrderType>(n, icell, ncells)] = cdot_rYs;
+    rhoesrc -= cdot_rYs * ei_pt[n];
+  }
+  ydot_d[vec_index<OrderType>(NUM_SPECIES, icell, ncells)] =
+    rhoesrc * (rho_pt_inv / Cv_pt);
+}
+
+
+template <typename OrderType>
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
+fKernelSpecH(
+  const int icell,
+  const int ncells,
+  const amrex::Real dt_save,
+  const amrex::Real* yvec_d,
+  amrex::Real* ydot_d, // NOLINT(readability-non-const-parameter)
+  const amrex::Real* rhoe_init,
+  const amrex::Real* rhoesrc_ext,
+  const amrex::Real* rYs)
+{
+  amrex::Real rho_pt = 0.0;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> massfrac = {0.0};
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    massfrac[n] = yvec_d[vec_index<OrderType>(n, icell, ncells)];
+    rho_pt += massfrac[n];
+  }
+  const amrex::Real rho_pt_inv = 1.0 / rho_pt;
+
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    massfrac[n] *= rho_pt_inv;
+  }
+
+  const amrex::Real nrg_pt =
+    (rhoe_init[icell] + rhoesrc_ext[icell] * dt_save) * rho_pt_inv;
+
+  amrex::Real temp_pt =
+    yvec_d[vec_index<OrderType>(NUM_SPECIES, icell, ncells)];
+
+  amrex::Real Cv_pt = 0.0;
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> ei_pt = {0.0};
+  auto eos = pele::physics::PhysicsType::eos();
+  eos.RHY2T(rho_pt, nrg_pt, massfrac.arr, temp_pt);
+  eos.RTY2Hi(rho_pt, temp_pt, massfrac.arr, ei_pt.arr);
+  eos.RTY2Cp(rho_pt, temp_pt, massfrac.arr, Cv_pt);
+
+  amrex::GpuArray<amrex::Real, NUM_SPECIES> cdots_pt = {0.0};
+  eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
+
+  amrex::Real rhoesrc = rhoesrc_ext[icell];
+  for (int n = 0; n < NUM_SPECIES; n++) {
+    const amrex::Real cdot_rYs =
+      cdots_pt[n] + rYs[spec_index<OrderType>(n, icell, ncells)];
+    ydot_d[vec_index<OrderType>(n, icell, ncells)] = cdot_rYs;
+    rhoesrc -= cdot_rYs * ei_pt[n];
+  }
+  ydot_d[vec_index<OrderType>(NUM_SPECIES, icell, ncells)] =
+    rhoesrc * (rho_pt_inv / Cv_pt);
+}
+
+
+template <typename OrderType>
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE void
 fKernelSpec(
   const int icell,
   const int ncells,
