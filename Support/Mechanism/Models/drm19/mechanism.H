@@ -1870,6 +1870,30 @@ CKCPBL(const amrex::Real T, const amrex::Real x[], amrex::Real& cpbl)
   cpbl = result * 8.31446261815324e+07;
 }
 
+#if 0
+
+// Returns the mean specific heat at CP (Eq. 34)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
+{
+  amrex::Real result = 0;
+  amrex::Real tT = T; // temporary temperature
+  const amrex::Real tc[5] = {
+    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+  amrex::Real cpor[21];                  //  temporary storage
+
+  cp_R(cpor, tc);
+
+#pragma unroll
+  for (int i = 0; i < 21; i++) {
+    result += cpor[i] * y[i] * global_imw[i];
+  }
+
+  cpbs = result * 8.31446261815324e+07;
+}
+
+#else
+
 // Returns the mean specific heat at CP (Eq. 34)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
@@ -2135,6 +2159,8 @@ CKCPBS(const amrex::Real T, const amrex::Real y[], amrex::Real& cpbs)
 
   cpbs = result * 8.31446261815324e+07;
 }
+
+#endif
 
 // Returns the mean specific heat at CV (Eq. 35)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -2440,6 +2466,32 @@ CKHBML(const amrex::Real T, const amrex::Real x[], amrex::Real& hbml)
   hbml = result * RT;
 }
 
+#if 0
+
+// Returns mean enthalpy of mixture in mass units
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
+{
+  amrex::Real result = 0;
+  amrex::Real tT = T; // temporary temperature
+  const amrex::Real tc[5] = {
+    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+  amrex::Real hml[21];                       //  temporary storage
+  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
+
+  speciesEnthalpy(hml, tc);
+
+  int id;
+  #pragma unroll
+  for (id = 0; id < 21; ++id) {
+    result += y[id] * hml[id] * global_imw[id];
+  }
+
+  hbms = result * RT;
+}
+
+#else
+
 // Returns mean enthalpy of mixture in mass units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
@@ -2707,6 +2759,8 @@ CKHBMS(const amrex::Real T, const amrex::Real y[], amrex::Real& hbms)
 
   hbms = result * RT;
 }
+
+#endif
 
 // get mean internal energy in molar units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -18220,14 +18274,12 @@ GET_CRITPARAMS(
 
   amrex::Real EPS[21];
   amrex::Real SIG[21];
-  amrex::Real wt[21];
   amrex::Real Rcst = 83.144598; // in bar [CGS] !
   amrex::Real avogadro = 6.02214199e23;
   amrex::Real boltzmann = 1.3806503e-16; // we work in CGS
 
   egtransetEPS(EPS);
   egtransetSIG(SIG);
-  get_mw(wt);
 
   // species 0: H2
   // Imported from NIST
@@ -18241,16 +18293,16 @@ GET_CRITPARAMS(
   Tci[1] = 1.316 * EPS[1];
   ai[1] = (5.55 * avogadro * avogadro * EPS[1] * boltzmann * 1e-24 * SIG[1] *
            SIG[1] * SIG[1]) /
-          (wt[1] * wt[1]);
-  bi[1] = 0.855 * avogadro * 1e-24 * SIG[1] * SIG[1] * SIG[1] / (wt[1]);
+          (global_mw[1] * global_mw[1]);
+  bi[1] = 0.855 * avogadro * 1e-24 * SIG[1] * SIG[1] * SIG[1] / (global_mw[1]);
   acentric_i[1] = 0.0;
 
   // species 2: O
   Tci[2] = 1.316 * EPS[2];
   ai[2] = (5.55 * avogadro * avogadro * EPS[2] * boltzmann * 1e-24 * SIG[2] *
            SIG[2] * SIG[2]) /
-          (wt[2] * wt[2]);
-  bi[2] = 0.855 * avogadro * 1e-24 * SIG[2] * SIG[2] * SIG[2] / (wt[2]);
+          (global_mw[2] * global_mw[2]);
+  bi[2] = 0.855 * avogadro * 1e-24 * SIG[2] * SIG[2] * SIG[2] / (global_mw[2]);
   acentric_i[2] = 0.0;
 
   // species 3: O2
@@ -18265,8 +18317,8 @@ GET_CRITPARAMS(
   Tci[4] = 1.316 * EPS[4];
   ai[4] = (5.55 * avogadro * avogadro * EPS[4] * boltzmann * 1e-24 * SIG[4] *
            SIG[4] * SIG[4]) /
-          (wt[4] * wt[4]);
-  bi[4] = 0.855 * avogadro * 1e-24 * SIG[4] * SIG[4] * SIG[4] / (wt[4]);
+          (global_mw[4] * global_mw[4]);
+  bi[4] = 0.855 * avogadro * 1e-24 * SIG[4] * SIG[4] * SIG[4] / (global_mw[4]);
   acentric_i[4] = 0.0;
 
   // species 5: H2O
@@ -18281,32 +18333,32 @@ GET_CRITPARAMS(
   Tci[6] = 1.316 * EPS[6];
   ai[6] = (5.55 * avogadro * avogadro * EPS[6] * boltzmann * 1e-24 * SIG[6] *
            SIG[6] * SIG[6]) /
-          (wt[6] * wt[6]);
-  bi[6] = 0.855 * avogadro * 1e-24 * SIG[6] * SIG[6] * SIG[6] / (wt[6]);
+          (global_mw[6] * global_mw[6]);
+  bi[6] = 0.855 * avogadro * 1e-24 * SIG[6] * SIG[6] * SIG[6] / (global_mw[6]);
   acentric_i[6] = 0.0;
 
   // species 7: CH2
   Tci[7] = 1.316 * EPS[7];
   ai[7] = (5.55 * avogadro * avogadro * EPS[7] * boltzmann * 1e-24 * SIG[7] *
            SIG[7] * SIG[7]) /
-          (wt[7] * wt[7]);
-  bi[7] = 0.855 * avogadro * 1e-24 * SIG[7] * SIG[7] * SIG[7] / (wt[7]);
+          (global_mw[7] * global_mw[7]);
+  bi[7] = 0.855 * avogadro * 1e-24 * SIG[7] * SIG[7] * SIG[7] / (global_mw[7]);
   acentric_i[7] = 0.0;
 
   // species 8: CH2(S)
   Tci[8] = 1.316 * EPS[8];
   ai[8] = (5.55 * avogadro * avogadro * EPS[8] * boltzmann * 1e-24 * SIG[8] *
            SIG[8] * SIG[8]) /
-          (wt[8] * wt[8]);
-  bi[8] = 0.855 * avogadro * 1e-24 * SIG[8] * SIG[8] * SIG[8] / (wt[8]);
+          (global_mw[8] * global_mw[8]);
+  bi[8] = 0.855 * avogadro * 1e-24 * SIG[8] * SIG[8] * SIG[8] / (global_mw[8]);
   acentric_i[8] = 0.0;
 
   // species 9: CH3
   Tci[9] = 1.316 * EPS[9];
   ai[9] = (5.55 * avogadro * avogadro * EPS[9] * boltzmann * 1e-24 * SIG[9] *
            SIG[9] * SIG[9]) /
-          (wt[9] * wt[9]);
-  bi[9] = 0.855 * avogadro * 1e-24 * SIG[9] * SIG[9] * SIG[9] / (wt[9]);
+          (global_mw[9] * global_mw[9]);
+  bi[9] = 0.855 * avogadro * 1e-24 * SIG[9] * SIG[9] * SIG[9] / (global_mw[9]);
   acentric_i[9] = 0.0;
 
   // species 10: CH4
@@ -18337,24 +18389,24 @@ GET_CRITPARAMS(
   Tci[13] = 1.316 * EPS[13];
   ai[13] = (5.55 * avogadro * avogadro * EPS[13] * boltzmann * 1e-24 * SIG[13] *
             SIG[13] * SIG[13]) /
-           (wt[13] * wt[13]);
-  bi[13] = 0.855 * avogadro * 1e-24 * SIG[13] * SIG[13] * SIG[13] / (wt[13]);
+           (global_mw[13] * global_mw[13]);
+  bi[13] = 0.855 * avogadro * 1e-24 * SIG[13] * SIG[13] * SIG[13] / (global_mw[13]);
   acentric_i[13] = 0.0;
 
   // species 14: CH2O
   Tci[14] = 1.316 * EPS[14];
   ai[14] = (5.55 * avogadro * avogadro * EPS[14] * boltzmann * 1e-24 * SIG[14] *
             SIG[14] * SIG[14]) /
-           (wt[14] * wt[14]);
-  bi[14] = 0.855 * avogadro * 1e-24 * SIG[14] * SIG[14] * SIG[14] / (wt[14]);
+           (global_mw[14] * global_mw[14]);
+  bi[14] = 0.855 * avogadro * 1e-24 * SIG[14] * SIG[14] * SIG[14] / (global_mw[14]);
   acentric_i[14] = 0.0;
 
   // species 15: CH3O
   Tci[15] = 1.316 * EPS[15];
   ai[15] = (5.55 * avogadro * avogadro * EPS[15] * boltzmann * 1e-24 * SIG[15] *
             SIG[15] * SIG[15]) /
-           (wt[15] * wt[15]);
-  bi[15] = 0.855 * avogadro * 1e-24 * SIG[15] * SIG[15] * SIG[15] / (wt[15]);
+           (global_mw[15] * global_mw[15]);
+  bi[15] = 0.855 * avogadro * 1e-24 * SIG[15] * SIG[15] * SIG[15] / (global_mw[15]);
   acentric_i[15] = 0.0;
 
   // species 16: C2H4
@@ -18369,8 +18421,8 @@ GET_CRITPARAMS(
   Tci[17] = 1.316 * EPS[17];
   ai[17] = (5.55 * avogadro * avogadro * EPS[17] * boltzmann * 1e-24 * SIG[17] *
             SIG[17] * SIG[17]) /
-           (wt[17] * wt[17]);
-  bi[17] = 0.855 * avogadro * 1e-24 * SIG[17] * SIG[17] * SIG[17] / (wt[17]);
+           (global_mw[17] * global_mw[17]);
+  bi[17] = 0.855 * avogadro * 1e-24 * SIG[17] * SIG[17] * SIG[17] / (global_mw[17]);
   acentric_i[17] = 0.0;
 
   // species 18: C2H6
