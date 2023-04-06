@@ -36,7 +36,11 @@ struct Fuego
   }
 
   AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_HIP
+  AMREX_NO_INLINE
+#else
   AMREX_FORCE_INLINE
+#endif
   static void RTY2Cp(
     const amrex::Real /*R*/,
     const amrex::Real T,
@@ -149,7 +153,11 @@ struct Fuego
   }
 
   AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_HIP
+  AMREX_NO_INLINE
+#else
   AMREX_FORCE_INLINE
+#endif
   static void RHY2T(
     const amrex::Real /*R*/,
     const amrex::Real H,
@@ -198,7 +206,11 @@ struct Fuego
   }
 
   AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_HIP
+  AMREX_NO_INLINE
+#else
   AMREX_FORCE_INLINE
+#endif
   static void RTY2WDOT(
     const amrex::Real R,
     const amrex::Real T,
@@ -216,12 +228,6 @@ struct Fuego
     }
   }
 
-#ifdef AMREX_USE_HIP
-  // avoid register spillage on AMD, might be able to remove in future
-  __attribute__((noinline))
-#else
-  AMREX_FORCE_INLINE
-#endif
   AMREX_GPU_HOST_DEVICE static void
   RTY2JAC(
     const amrex::Real R,
@@ -358,7 +364,11 @@ struct Fuego
   }
 
   AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_HIP
+  AMREX_NO_INLINE
+#else
   AMREX_FORCE_INLINE
+#endif
   static void RTY2Hi(
     const amrex::Real /*R*/,
     const amrex::Real T,
