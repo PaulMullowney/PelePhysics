@@ -341,7 +341,7 @@ fKernelSpecH(
   const amrex::Real rho_pt_inv = 1.0 / rho_pt;
 
   for (int n = 0; n < NUM_SPECIES; n++) {
-    massfrac[n] *= rho_pt_inv;
+    massfrac[n] *= rho_pt_inv * global_imw[n];
   }
 
   const amrex::Real nrg_pt =
@@ -353,11 +353,11 @@ fKernelSpecH(
 
   amrex::Real Cv_pt = 0.0;
   auto eos = pele::physics::PhysicsType::eos();
-  eos.RHY2T(rho_pt, nrg_pt, massfrac.arr, temp_pt);
-  eos.RTY2Cp(rho_pt, temp_pt, massfrac.arr, Cv_pt);
+  eos.RHY2T_tmp(rho_pt, nrg_pt, massfrac.arr, temp_pt);
+  eos.RTY2Cp_tmp(rho_pt, temp_pt, massfrac.arr, Cv_pt);
 
   amrex::GpuArray<amrex::Real, NUM_SPECIES> cdots_pt = {0.0};
-  eos.RTY2WDOT(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
+  eos.RTY2WDOT_tmp(rho_pt, temp_pt, massfrac.arr, cdots_pt.arr);
 
   amrex::Real rhoesrc = rhoesrc_ext[icell];
 #if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)

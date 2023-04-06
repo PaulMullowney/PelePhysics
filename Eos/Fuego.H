@@ -53,6 +53,29 @@ struct Fuego
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
   static void
+  TY2Cp_tmp(const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& Cp)
+  {
+    CKCPBS_tmp(T, Y, Cp);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_HIP
+  AMREX_NO_INLINE
+#else
+  AMREX_FORCE_INLINE
+#endif
+  static void RTY2Cp_tmp(
+    const amrex::Real /*R*/,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& Cp)
+  {
+    TY2Cp_tmp(T, Y, Cp);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  static void
   TY2Cv(const amrex::Real T, const amrex::Real Y[NUM_SPECIES], amrex::Real& Cv)
   {
     CKCVBS(T, Y, Cv);
@@ -169,6 +192,32 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  static void
+  HY2T_tmp(const amrex::Real H, const amrex::Real Y[NUM_SPECIES], amrex::Real& T)
+  {
+    // For Fuego this function is really just a wrapper for GET_T_GIVEN_HY
+    // In SRK this will be different probably
+    int lierr = 0;
+    GET_T_GIVEN_HY_tmp(H, Y, T, lierr);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_HIP
+  AMREX_NO_INLINE
+#else
+  AMREX_FORCE_INLINE
+#endif
+  static void RHY2T_tmp(
+    const amrex::Real /*R*/,
+    const amrex::Real H,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real& T)
+  {
+    HY2T_tmp(H, Y, T);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   static void RYET2P(
     const amrex::Real R,
     const amrex::Real Y[NUM_SPECIES],
@@ -225,6 +274,30 @@ struct Fuego
     get_mw(mw);
     for (int n = 0; n < NUM_SPECIES; n++) {
       WDOT[n] *= mw[n];
+    }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_HIP
+  AMREX_NO_INLINE
+#else
+  AMREX_FORCE_INLINE
+#endif
+  static void RTY2WDOT_tmp(
+    const amrex::Real R,
+    const amrex::Real T,
+    const amrex::Real Y[NUM_SPECIES],
+    amrex::Real WDOT[NUM_SPECIES])
+  {
+    // CKWYR(&R, &T, Y, WDOT);
+    amrex::Real C[NUM_SPECIES];
+    CKYTCR_tmp(R, T, Y, C);
+    CKWC(T, C, WDOT);
+
+    //amrex::Real mw[NUM_SPECIES];
+    //get_mw(mw);
+    for (int n = 0; n < NUM_SPECIES; n++) {
+      WDOT[n] *= global_mw[n];
     }
   }
 
