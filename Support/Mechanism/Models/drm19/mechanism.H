@@ -89,27 +89,27 @@ CKINDX(int* mm, int* kk, int* ii, int* nfit)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 get_imw(amrex::Real* imw_new)
 {
-  imw_new[0] = 1.0 / 2.016000;   // H2
-  imw_new[1] = 1.0 / 1.008000;   // H
-  imw_new[2] = 1.0 / 15.999000;  // O
-  imw_new[3] = 1.0 / 31.998000;  // O2
-  imw_new[4] = 1.0 / 17.007000;  // OH
-  imw_new[5] = 1.0 / 18.015000;  // H2O
-  imw_new[6] = 1.0 / 33.006000;  // HO2
-  imw_new[7] = 1.0 / 14.027000;  // CH2
-  imw_new[8] = 1.0 / 14.027000;  // CH2(S)
-  imw_new[9] = 1.0 / 15.035000;  // CH3
-  imw_new[10] = 1.0 / 16.043000; // CH4
-  imw_new[11] = 1.0 / 28.010000; // CO
-  imw_new[12] = 1.0 / 44.009000; // CO2
-  imw_new[13] = 1.0 / 29.018000; // HCO
-  imw_new[14] = 1.0 / 30.026000; // CH2O
-  imw_new[15] = 1.0 / 31.034000; // CH3O
-  imw_new[16] = 1.0 / 28.054000; // C2H4
-  imw_new[17] = 1.0 / 29.062000; // C2H5
-  imw_new[18] = 1.0 / 30.070000; // C2H6
-  imw_new[19] = 1.0 / 28.014000; // N2
-  imw_new[20] = 1.0 / 39.950000; // AR
+  imw_new[0] = 0.4960317460317460;  // H2
+  imw_new[1] = 0.9920634920634921;  // H
+  imw_new[2] = 0.0625039064941559;  // O
+  imw_new[3] = 0.0312519532470779;  // O2
+  imw_new[4] = 0.0587993179279120;  // OH
+  imw_new[5] = 0.0555092978073827;  // H2O
+  imw_new[6] = 0.0302975216627280;  // HO2
+  imw_new[7] = 0.0712910814857061;  // CH2
+  imw_new[8] = 0.0712910814857061;  // CH2(S)
+  imw_new[9] = 0.0665114732291320;  // CH3
+  imw_new[10] = 0.0623324814560868; // CH4
+  imw_new[11] = 0.0357015351660121; // CO
+  imw_new[12] = 0.0227226249176305; // CO2
+  imw_new[13] = 0.0344613688055690; // HCO
+  imw_new[14] = 0.0333044694598015; // CH2O
+  imw_new[15] = 0.0322227234645872; // CH3O
+  imw_new[16] = 0.0356455407428531; // C2H4
+  imw_new[17] = 0.0344091941366733; // C2H5
+  imw_new[18] = 0.0332557366145660; // C2H6
+  imw_new[19] = 0.0356964374955379; // N2
+  imw_new[20] = 0.0250312891113892; // AR
 }
 
 //  molecular weights
@@ -139,6 +139,56 @@ get_mw(amrex::Real* mw_new)
   mw_new[20] = 39.950000; // AR
 }
 
+//  inverse molecular weights
+AMREX_GPU_CONSTANT const amrex::Real global_imw[21] = {
+  0.4960317460317460, // H2
+  0.9920634920634921, // H
+  0.0625039064941559, // O
+  0.0312519532470779, // O2
+  0.0587993179279120, // OH
+  0.0555092978073827, // H2O
+  0.0302975216627280, // HO2
+  0.0712910814857061, // CH2
+  0.0712910814857061, // CH2(S)
+  0.0665114732291320, // CH3
+  0.0623324814560868, // CH4
+  0.0357015351660121, // CO
+  0.0227226249176305, // CO2
+  0.0344613688055690, // HCO
+  0.0333044694598015, // CH2O
+  0.0322227234645872, // CH3O
+  0.0356455407428531, // C2H4
+  0.0344091941366733, // C2H5
+  0.0332557366145660, // C2H6
+  0.0356964374955379, // N2
+  0.0250312891113892, // AR
+};
+
+//  molecular weights
+AMREX_GPU_CONSTANT const amrex::Real global_mw[21] = {
+  2.016000,  // H2
+  1.008000,  // H
+  15.999000, // O
+  31.998000, // O2
+  17.007000, // OH
+  18.015000, // H2O
+  33.006000, // HO2
+  14.027000, // CH2
+  14.027000, // CH2(S)
+  15.035000, // CH3
+  16.043000, // CH4
+  28.010000, // CO
+  44.009000, // CO2
+  29.018000, // HCO
+  30.026000, // CH2O
+  31.034000, // CH3O
+  28.054000, // C2H4
+  29.062000, // C2H5
+  30.070000, // C2H6
+  28.014000, // N2
+  39.950000, // AR
+};
+
 //  Returns R, Rc, Patm
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKRP(amrex::Real* ru, amrex::Real* ruc, amrex::Real* pa)
@@ -149,7 +199,6 @@ CKRP(amrex::Real* ru, amrex::Real* ruc, amrex::Real* pa)
 }
 
 // compute Cv/R at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 cv_R(amrex::Real* species, const amrex::Real* tc)
 {
@@ -330,7 +379,6 @@ cv_R(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute Cp/R at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 cp_R(amrex::Real* species, const amrex::Real* tc)
 {
@@ -511,14 +559,13 @@ cp_R(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the g/(RT) at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 gibbs(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -754,14 +801,13 @@ gibbs(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the a/(RT) at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 helmholtz(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -977,14 +1023,13 @@ helmholtz(amrex::Real* species, const amrex::Real* tc)
 }
 
 // compute the e/(RT) at the given temperature
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesInternalEnergy(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -1158,15 +1203,15 @@ speciesInternalEnergy(amrex::Real* species, const amrex::Real* tc)
                 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
 }
 
+#if 0
 // compute the h/(RT) at the given temperature (Eq 20)
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesEnthalpy(amrex::Real* species, const amrex::Real* tc)
 {
 
   // temperature
   const amrex::Real T = tc[1];
-  const amrex::Real invT = 1 / T;
+  const amrex::Real invT = 1.0 / T;
 
   // species with midpoint at T=1000 kelvin
   if (T < 1000) {
@@ -1340,8 +1385,293 @@ speciesEnthalpy(amrex::Real* species, const amrex::Real* tc)
                 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
 }
 
+#else
+
+// compute the h/(RT) at the given temperature (Eq 20)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+speciesEnthalpyLow(int index, amrex::Real invT, const amrex::Real* tc)
+{
+  switch (index)
+  {
+  case 0: default:
+    return +2.34433112e+00 + 3.99026037e-03 * tc[1] -
+      6.49271700e-06 * tc[2] + 5.03930235e-09 * tc[3] -
+      1.47522352e-12 * tc[4] - 9.17935173e+02 * invT;
+  case 1:
+    return +2.50000000e+00 + 3.52666409e-13 * tc[1] -
+      6.65306547e-16 * tc[2] + 5.75204080e-19 * tc[3] -
+      1.85546466e-22 * tc[4] + 2.54736599e+04 * invT;
+  case 2:
+    return +3.16826710e+00 - 1.63965942e-03 * tc[1] +
+      2.21435465e-06 * tc[2] - 1.53201656e-09 * tc[3] +
+      4.22531942e-13 * tc[4] + 2.91222592e+04 * invT;
+  case 3:
+    return +3.78245636e+00 - 1.49836708e-03 * tc[1] +
+      3.28243400e-06 * tc[2] - 2.42032377e-09 * tc[3] +
+      6.48745674e-13 * tc[4] - 1.06394356e+03 * invT;
+  case 4:
+    return  +3.99201543e+00 - 1.20065876e-03 * tc[1] +
+      1.53931280e-06 * tc[2] - 9.70283332e-10 * tc[3] +
+      2.72822940e-13 * tc[4] + 3.61508056e+03 * invT;
+  case 5:
+    return +4.19864056e+00 - 1.01821705e-03 * tc[1] +
+      2.17346737e-06 * tc[2] - 1.37199266e-09 * tc[3] +
+      3.54395634e-13 * tc[4] - 3.02937267e+04 * invT;
+  case 6:
+    return +4.30179801e+00 - 2.37456025e-03 * tc[1] +
+      7.05276303e-06 * tc[2] - 6.06909735e-09 * tc[3] +
+      1.85845025e-12 * tc[4] + 2.94808040e+02 * invT;
+  case 7:
+    return +3.76267867e+00 + 4.84436072e-04 * tc[1] +
+      9.31632803e-07 * tc[2] - 9.62727883e-10 * tc[3] +
+      3.37483438e-13 * tc[4] + 4.60040401e+04 * invT;
+  case 8:
+    return +4.19860411e+00 - 1.18330710e-03 * tc[1] +
+      2.74432073e-06 * tc[2] - 1.67203995e-09 * tc[3] +
+      3.88629474e-13 * tc[4] + 5.04968163e+04 * invT;
+  case 9:
+    return +3.67359040e+00 + 1.00547588e-03 * tc[1] +
+      1.91007285e-06 * tc[2] - 1.71779356e-09 * tc[3] +
+      5.08771468e-13 * tc[4] + 1.64449988e+04 * invT;
+  case 10:
+    return +5.14987613e+00 - 6.83548940e-03 * tc[1] +
+      1.63933533e-05 * tc[2] - 1.21185757e-08 * tc[3] +
+      3.33387912e-12 * tc[4] - 1.02466476e+04 * invT;
+  case 11:
+    return +3.57953347e+00 - 3.05176840e-04 * tc[1] +
+      3.38938110e-07 * tc[2] + 2.26751471e-10 * tc[3] -
+      1.80884900e-13 * tc[4] - 1.43440860e+04 * invT;
+  case 12:
+    return +2.35677352e+00 + 4.49229839e-03 * tc[1] -
+      2.37452090e-06 * tc[2] + 6.14797555e-10 * tc[3] -
+      2.87399096e-14 * tc[4] - 4.83719697e+04 * invT;
+  case 13:
+    return +4.22118584e+00 - 1.62196266e-03 * tc[1] +
+      4.59331487e-06 * tc[2] - 3.32860233e-09 * tc[3] +
+      8.67537730e-13 * tc[4] + 3.83956496e+03 * invT;
+  case 14:
+    return +4.79372315e+00 - 4.95416684e-03 * tc[1] +
+      1.24406669e-05 * tc[2] - 9.48213152e-09 * tc[3] +
+      2.63545304e-12 * tc[4] - 1.43089567e+04 * invT;
+  case 15:
+    return +2.10620400e+00 + 3.60829750e-03 * tc[1] +
+      1.77949067e-06 * tc[2] - 1.84440900e-09 * tc[3] +
+      4.15122000e-13 * tc[4] + 9.78601100e+02 * invT;
+  case 16:
+    return +3.95920148e+00 - 3.78526124e-03 * tc[1] +
+      1.90330097e-05 * tc[2] - 1.72897188e-08 * tc[3] +
+      5.39768746e-12 * tc[4] + 5.08977593e+03 * invT;
+  case 17:
+    return +4.30646568e+00 - 2.09329446e-03 * tc[1] +
+      1.65714269e-05 * tc[2] - 1.49781651e-08 * tc[3] +
+      4.61018008e-12 * tc[4] + 1.28416265e+04 * invT;
+  case 18:
+    return +4.29142492e+00 - 2.75077135e-03 * tc[1] +
+      1.99812763e-05 * tc[2] - 1.77116571e-08 * tc[3] +
+      5.37371542e-12 * tc[4] - 1.15222055e+04 * invT;
+  case 19:
+    return +3.29867700e+00 + 7.04120200e-04 * tc[1] -
+      1.32107400e-06 * tc[2] + 1.41037875e-09 * tc[3] -
+      4.88970800e-13 * tc[4] - 1.02089990e+03 * invT;
+  case 20:
+    return +2.50000000e+00 + 0.00000000e+00 * tc[1] +
+      0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+      0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
+  }
+}
+
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
+speciesEnthalpyHigh(int index, amrex::Real invT, const amrex::Real* tc)
+{
+  switch (index)
+  {
+  case 0: default:
+    return +3.33727920e+00 - 2.47012365e-05 * tc[1] +
+      1.66485593e-07 * tc[2] - 4.48915985e-11 * tc[3] +
+      4.00510752e-15 * tc[4] - 9.50158922e+02 * invT;
+  case 1:
+    return +2.50000001e+00 - 1.15421486e-11 * tc[1] +
+      5.38539827e-15 * tc[2] - 1.18378809e-18 * tc[3] +
+      9.96394714e-23 * tc[4] + 2.54736599e+04 * invT;
+  case 2:
+    return +2.56942078e+00 - 4.29870569e-05 * tc[1] +
+      1.39828196e-08 * tc[2] - 2.50444497e-12 * tc[3] +
+      2.45667382e-16 * tc[4] + 2.92175791e+04 * invT;
+  case 3:
+    return +3.28253784e+00 + 7.41543770e-04 * tc[1] -
+      2.52655556e-07 * tc[2] + 5.23676387e-11 * tc[3] -
+      4.33435588e-15 * tc[4] - 1.08845772e+03 * invT;
+  case 4:
+    return +3.09288767e+00 + 2.74214858e-04 * tc[1] +
+      4.21684093e-08 * tc[2] - 2.19865389e-11 * tc[3] +
+      2.34824752e-15 * tc[4] + 3.85865700e+03 * invT;
+  case 5:
+    return +3.03399249e+00 + 1.08845902e-03 * tc[1] -
+      5.46908393e-08 * tc[2] - 2.42604967e-11 * tc[3] +
+      3.36401984e-15 * tc[4] - 3.00042971e+04 * invT;
+  case 6:
+    return +4.01721090e+00 + 1.11991006e-03 * tc[1] -
+      2.11219383e-07 * tc[2] + 2.85615925e-11 * tc[3] -
+      2.15817070e-15 * tc[4] + 1.11856713e+02 * invT;
+  case 7:
+    return +2.87410113e+00 + 1.82819646e-03 * tc[1] -
+      4.69648657e-07 * tc[2] + 6.50448872e-11 * tc[3] -
+      3.75455134e-15 * tc[4] + 4.62636040e+04 * invT;
+  case 8:
+    return +2.29203842e+00 + 2.32794318e-03 * tc[1] -
+      6.70639823e-07 * tc[2] + 1.04476500e-10 * tc[3] -
+      6.79432730e-15 * tc[4] + 5.09259997e+04 * invT;
+  case 9:
+    return +2.28571772e+00 + 3.61995018e-03 * tc[1] -
+      9.95714493e-07 * tc[2] + 1.48921161e-10 * tc[3] -
+      9.34308788e-15 * tc[4] + 1.67755843e+04 * invT;
+  case 10:
+    return +7.48514950e-02 + 6.69547335e-03 * tc[1] -
+      1.91095270e-06 * tc[2] + 3.05731338e-10 * tc[3] -
+      2.03630460e-14 * tc[4] - 9.46834459e+03 * invT;
+  case 11:
+    return +2.71518561e+00 + 1.03126372e-03 * tc[1] -
+      3.32941924e-07 * tc[2] + 5.75132520e-11 * tc[3] -
+      4.07295432e-15 * tc[4] - 1.41518724e+04 * invT;
+  case 12:
+    return +3.85746029e+00 + 2.20718513e-03 * tc[1] -
+      7.38271347e-07 * tc[2] + 1.30872547e-10 * tc[3] -
+      9.44168328e-15 * tc[4] - 4.87591660e+04 * invT;
+  case 13:
+    return +2.77217438e+00 + 2.47847763e-03 * tc[1] -
+      8.28152043e-07 * tc[2] + 1.47290445e-10 * tc[3] -
+      1.06701742e-14 * tc[4] + 4.01191815e+03 * invT;
+  case 14:
+    return +1.76069008e+00 + 4.60000041e-03 * tc[1] -
+      1.47419604e-06 * tc[2] + 2.51603030e-10 * tc[3] -
+      1.76771128e-14 * tc[4] - 1.39958323e+04 * invT;
+  case 15:
+    return +3.77079900e+00 + 3.93574850e-03 * tc[1] -
+      8.85461333e-07 * tc[2] + 9.86107750e-11 * tc[3] -
+      4.22523200e-15 * tc[4] + 1.27832520e+02 * invT;
+  case 16:
+    return +2.03611116e+00 + 7.32270755e-03 * tc[1] -
+      2.23692638e-06 * tc[2] + 3.68057308e-10 * tc[3] -
+      2.51412122e-14 * tc[4] + 4.93988614e+03 * invT;
+  case 17:
+    return +1.95465642e+00 + 8.69863610e-03 * tc[1] -
+      2.66068889e-06 * tc[2] + 4.38044223e-10 * tc[3] -
+      2.99283152e-14 * tc[4] + 1.28575200e+04 * invT;
+  case 18:
+    return +1.07188150e+00 + 1.08426339e-02 * tc[1] -
+      3.34186890e-06 * tc[2] + 5.53530003e-10 * tc[3] -
+      3.80005780e-14 * tc[4] - 1.14263932e+04 * invT;
+  case 19:
+    return +2.92664000e+00 + 7.43988400e-04 * tc[1] -
+      1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
+      1.35067020e-15 * tc[4] - 9.22797700e+02 * invT;
+  case 20:
+    return +2.50000000e+00 + 0.00000000e+00 * tc[1] +
+      0.00000000e+00 * tc[2] + 0.00000000e+00 * tc[3] +
+      0.00000000e+00 * tc[4] - 7.45375000e+02 * invT;
+  }
+}
+
+// compute the h/(RT) at the given temperature (Eq 20)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+speciesEnthalpy(amrex::Real* species, const amrex::Real* tc)
+{
+
+  // temperature
+  const amrex::Real T = tc[1];
+  const amrex::Real invT = 1 / T;
+
+  // species with midpoint at T=1000 kelvin
+  if (T < 1000) {
+    // species 0: H2
+    species[0] = speciesEnthalpyLow(0, invT, tc);
+    // species 1: H
+    species[1] = speciesEnthalpyLow(1, invT, tc);
+    // species 2: O
+    species[2] = speciesEnthalpyLow(2, invT, tc);
+    // species 3: O2
+    species[3] = speciesEnthalpyLow(3, invT, tc);
+    // species 4: OH
+    species[4] = speciesEnthalpyLow(4, invT, tc);
+    // species 5: H2O
+    species[5] = speciesEnthalpyLow(5, invT, tc);
+    // species 6: HO2
+    species[6] = speciesEnthalpyLow(6, invT, tc);
+    // species 7: CH2
+    species[7] = speciesEnthalpyLow(7, invT, tc);
+    // species 8: CH2(S)
+    species[8] = speciesEnthalpyLow(8, invT, tc);
+    // species 9: CH3
+    species[9] = speciesEnthalpyLow(9, invT, tc);
+    // species 10: CH4
+    species[10] = speciesEnthalpyLow(10, invT, tc);
+    // species 11: CO
+    species[11] = speciesEnthalpyLow(11, invT, tc);
+    // species 12: CO2
+    species[12] = speciesEnthalpyLow(12, invT, tc);
+    // species 13: HCO
+    species[13] = speciesEnthalpyLow(13, invT, tc);
+    // species 14: CH2O
+    species[14] = speciesEnthalpyLow(14, invT, tc);
+    // species 15: CH3O
+    species[15] = speciesEnthalpyLow(15, invT, tc);
+    // species 16: C2H4
+    species[16] = speciesEnthalpyLow(16, invT, tc);
+    // species 17: C2H5
+    species[17] = speciesEnthalpyLow(17, invT, tc);
+    // species 18: C2H6
+    species[18] = speciesEnthalpyLow(18, invT, tc);
+    // species 19: N2
+    species[19] = speciesEnthalpyLow(19, invT, tc);
+  } else {
+    // species 0: H2
+    species[0] = speciesEnthalpyHigh(0, invT, tc);
+    // species 1: H
+    species[1] = speciesEnthalpyHigh(1, invT, tc);
+    // species 2: O
+    species[2] = speciesEnthalpyHigh(2, invT, tc);
+    // species 3: O2
+    species[3] = speciesEnthalpyHigh(3, invT, tc);
+    // species 4: OH
+    species[4] = speciesEnthalpyHigh(4, invT, tc);
+    // species 5: H2O
+    species[5] = speciesEnthalpyHigh(5, invT, tc);
+    // species 6: HO2
+    species[6] = speciesEnthalpyHigh(6, invT, tc);
+    // species 7: CH2
+    species[7] = speciesEnthalpyHigh(7, invT, tc);
+    // species 8: CH2(S)
+    species[8] = speciesEnthalpyHigh(8, invT, tc);
+    // species 9: CH3
+    species[9] = speciesEnthalpyHigh(9, invT, tc);
+    // species 10: CH4
+    species[10] = speciesEnthalpyHigh(10, invT, tc);
+    // species 11: CO
+    species[11] = speciesEnthalpyHigh(11, invT, tc);
+    // species 12: CO2
+    species[12] = speciesEnthalpyHigh(12, invT, tc);
+    // species 13: HCO
+    species[13] = speciesEnthalpyHigh(13, invT, tc);
+    // species 14: CH2O
+    species[14] = speciesEnthalpyHigh(14, invT, tc);
+    // species 15: CH3O
+    species[15] = speciesEnthalpyHigh(15, invT, tc);
+    // species 16: C2H4
+    species[16] = speciesEnthalpyHigh(16, invT, tc);
+    // species 17: C2H5
+    species[17] = speciesEnthalpyHigh(17, invT, tc);
+    // species 18: C2H6
+    species[18] = speciesEnthalpyHigh(18, invT, tc);
+    // species 19: N2
+    species[19] = speciesEnthalpyHigh(19, invT, tc);
+  }
+
+  species[20] = speciesEnthalpyLow(20, invT, tc);
+  return;
+}
+#endif
+
 // compute the S/R at the given temperature (Eq 21)
-// tc contains precomputed powers of T, tc[0] = log(T)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 speciesEntropy(amrex::Real* species, const amrex::Real* tc)
 {
@@ -1525,7 +1855,6 @@ speciesEntropy(amrex::Real* species, const amrex::Real* tc)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPBL(const amrex::Real* T, const amrex::Real* x, amrex::Real* cpbl)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1534,12 +1863,14 @@ CKCPBL(const amrex::Real* T, const amrex::Real* x, amrex::Real* cpbl)
   cp_R(cpor, tc);
 
   // perform dot product
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     result += x[id] * cpor[id];
   }
 
   *cpbl = result * 8.31446261815324e+07;
 }
+
+#if 0
 
 // Returns the mean specific heat at CP (Eq. 34)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -1549,28 +1880,535 @@ CKCPBS(const amrex::Real* T, const amrex::Real* y, amrex::Real* cpbs)
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real cpor[21], tresult[21];                  //  temporary storage
-  amrex::Real imw[21];
-
-  get_imw(imw);
+  amrex::Real cpor[21];                  //  temporary storage
 
   cp_R(cpor, tc);
 
+#pragma unroll
   for (int i = 0; i < 21; i++) {
-    tresult[i] = cpor[i] * y[i] * imw[i];
-  }
-  for (const auto& tr : tresult) {
-    result += tr;
+    result += cpor[i] * y[i] * global_imw[i];
   }
 
   *cpbs = result * 8.31446261815324e+07;
 }
 
+// Returns the mean specific heat at CP (Eq. 34)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCPBS_tmp(const amrex::Real tT, const amrex::Real y[21], amrex::Real& cpbs)
+{
+  amrex::Real result = 0;
+  const amrex::Real tc[5] = {
+    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+  amrex::Real cpor[21];                  //  temporary storage
+
+  cp_R(cpor, tc);
+
+#pragma unroll
+  for (int i = 0; i < 21; i++) {
+    result += cpor[i] * y[i];
+  }
+
+  cpbs = result * 8.31446261815324e+07;
+}
+
+#else
+
+// Returns the mean specific heat at CP (Eq. 34)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCPBS(const amrex::Real* T, const amrex::Real* y, amrex::Real* cpbs)
+{
+  amrex::Real result = 0.0;
+  const amrex::Real tT = *T; // temporary temperature
+  const amrex::Real tc[5] = {
+    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+
+  // compute Cp/R at the given temperature
+
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 0: H2
+    result +=
+      y[0] *
+      (+2.34433112e+00 + 7.98052075e-03 * tc[1] - 1.94781510e-05 * tc[2] +
+       2.01572094e-08 * tc[3] - 7.37611761e-12 * tc[4]) *
+      0.4960317460317460;
+    // species 1: H
+    result +=
+      y[1] *
+      (+2.50000000e+00 + 7.05332819e-13 * tc[1] - 1.99591964e-15 * tc[2] +
+       2.30081632e-18 * tc[3] - 9.27732332e-22 * tc[4]) *
+      0.9920634920634921;
+    // species 2: O
+    result +=
+      y[2] *
+      (+3.16826710e+00 - 3.27931884e-03 * tc[1] + 6.64306396e-06 * tc[2] -
+       6.12806624e-09 * tc[3] + 2.11265971e-12 * tc[4]) *
+      0.0625039064941559;
+    // species 3: O2
+    result +=
+      y[3] *
+      (+3.78245636e+00 - 2.99673416e-03 * tc[1] + 9.84730201e-06 * tc[2] -
+       9.68129509e-09 * tc[3] + 3.24372837e-12 * tc[4]) *
+      0.0312519532470779;
+    // species 4: OH
+    result +=
+      y[4] *
+      (+3.99201543e+00 - 2.40131752e-03 * tc[1] + 4.61793841e-06 * tc[2] -
+       3.88113333e-09 * tc[3] + 1.36411470e-12 * tc[4]) *
+      0.0587993179279120;
+    // species 5: H2O
+    result +=
+      y[5] *
+      (+4.19864056e+00 - 2.03643410e-03 * tc[1] + 6.52040211e-06 * tc[2] -
+       5.48797062e-09 * tc[3] + 1.77197817e-12 * tc[4]) *
+      0.0555092978073827;
+    // species 6: HO2
+    result +=
+      y[6] *
+      (+4.30179801e+00 - 4.74912051e-03 * tc[1] + 2.11582891e-05 * tc[2] -
+       2.42763894e-08 * tc[3] + 9.29225124e-12 * tc[4]) *
+      0.0302975216627280;
+    // species 7: CH2
+    result +=
+      y[7] *
+      (+3.76267867e+00 + 9.68872143e-04 * tc[1] + 2.79489841e-06 * tc[2] -
+       3.85091153e-09 * tc[3] + 1.68741719e-12 * tc[4]) *
+      0.0712910814857061;
+    // species 8: CH2(S)
+    result +=
+      y[8] *
+      (+4.19860411e+00 - 2.36661419e-03 * tc[1] + 8.23296220e-06 * tc[2] -
+       6.68815981e-09 * tc[3] + 1.94314737e-12 * tc[4]) *
+      0.0712910814857061;
+    // species 9: CH3
+    result +=
+      y[9] *
+      (+3.67359040e+00 + 2.01095175e-03 * tc[1] + 5.73021856e-06 * tc[2] -
+       6.87117425e-09 * tc[3] + 2.54385734e-12 * tc[4]) *
+      0.0665114732291320;
+    // species 10: CH4
+    result +=
+      y[10] *
+      (+5.14987613e+00 - 1.36709788e-02 * tc[1] + 4.91800599e-05 * tc[2] -
+       4.84743026e-08 * tc[3] + 1.66693956e-11 * tc[4]) *
+      0.0623324814560868;
+    // species 11: CO
+    result +=
+      y[11] *
+      (+3.57953347e+00 - 6.10353680e-04 * tc[1] + 1.01681433e-06 * tc[2] +
+       9.07005884e-10 * tc[3] - 9.04424499e-13 * tc[4]) *
+      0.0357015351660121;
+    // species 12: CO2
+    result +=
+      y[12] *
+      (+2.35677352e+00 + 8.98459677e-03 * tc[1] - 7.12356269e-06 * tc[2] +
+       2.45919022e-09 * tc[3] - 1.43699548e-13 * tc[4]) *
+      0.0227226249176305;
+    // species 13: HCO
+    result +=
+      y[13] *
+      (+4.22118584e+00 - 3.24392532e-03 * tc[1] + 1.37799446e-05 * tc[2] -
+       1.33144093e-08 * tc[3] + 4.33768865e-12 * tc[4]) *
+      0.0344613688055690;
+    // species 14: CH2O
+    result +=
+      y[14] *
+      (+4.79372315e+00 - 9.90833369e-03 * tc[1] + 3.73220008e-05 * tc[2] -
+       3.79285261e-08 * tc[3] + 1.31772652e-11 * tc[4]) *
+      0.0333044694598015;
+    // species 15: CH3O
+    result +=
+      y[15] *
+      (+2.10620400e+00 + 7.21659500e-03 * tc[1] + 5.33847200e-06 * tc[2] -
+       7.37763600e-09 * tc[3] + 2.07561000e-12 * tc[4]) *
+      0.0322227234645872;
+    // species 16: C2H4
+    result +=
+      y[16] *
+      (+3.95920148e+00 - 7.57052247e-03 * tc[1] + 5.70990292e-05 * tc[2] -
+       6.91588753e-08 * tc[3] + 2.69884373e-11 * tc[4]) *
+      0.0356455407428531;
+    // species 17: C2H5
+    result +=
+      y[17] *
+      (+4.30646568e+00 - 4.18658892e-03 * tc[1] + 4.97142807e-05 * tc[2] -
+       5.99126606e-08 * tc[3] + 2.30509004e-11 * tc[4]) *
+      0.0344091941366733;
+    // species 18: C2H6
+    result +=
+      y[18] *
+      (+4.29142492e+00 - 5.50154270e-03 * tc[1] + 5.99438288e-05 * tc[2] -
+       7.08466285e-08 * tc[3] + 2.68685771e-11 * tc[4]) *
+      0.0332557366145660;
+    // species 19: N2
+    result +=
+      y[19] *
+      (+3.29867700e+00 + 1.40824040e-03 * tc[1] - 3.96322200e-06 * tc[2] +
+       5.64151500e-09 * tc[3] - 2.44485400e-12 * tc[4]) *
+      0.0356964374955379;
+  } else {
+    // species 0: H2
+    result +=
+      y[0] *
+      (+3.33727920e+00 - 4.94024731e-05 * tc[1] + 4.99456778e-07 * tc[2] -
+       1.79566394e-10 * tc[3] + 2.00255376e-14 * tc[4]) *
+      0.4960317460317460;
+    // species 1: H
+    result +=
+      y[1] *
+      (+2.50000001e+00 - 2.30842973e-11 * tc[1] + 1.61561948e-14 * tc[2] -
+       4.73515235e-18 * tc[3] + 4.98197357e-22 * tc[4]) *
+      0.9920634920634921;
+    // species 2: O
+    result +=
+      y[2] *
+      (+2.56942078e+00 - 8.59741137e-05 * tc[1] + 4.19484589e-08 * tc[2] -
+       1.00177799e-11 * tc[3] + 1.22833691e-15 * tc[4]) *
+      0.0625039064941559;
+    // species 3: O2
+    result +=
+      y[3] *
+      (+3.28253784e+00 + 1.48308754e-03 * tc[1] - 7.57966669e-07 * tc[2] +
+       2.09470555e-10 * tc[3] - 2.16717794e-14 * tc[4]) *
+      0.0312519532470779;
+    // species 4: OH
+    result +=
+      y[4] *
+      (+3.09288767e+00 + 5.48429716e-04 * tc[1] + 1.26505228e-07 * tc[2] -
+       8.79461556e-11 * tc[3] + 1.17412376e-14 * tc[4]) *
+      0.0587993179279120;
+    // species 5: H2O
+    result +=
+      y[5] *
+      (+3.03399249e+00 + 2.17691804e-03 * tc[1] - 1.64072518e-07 * tc[2] -
+       9.70419870e-11 * tc[3] + 1.68200992e-14 * tc[4]) *
+      0.0555092978073827;
+    // species 6: HO2
+    result +=
+      y[6] *
+      (+4.01721090e+00 + 2.23982013e-03 * tc[1] - 6.33658150e-07 * tc[2] +
+       1.14246370e-10 * tc[3] - 1.07908535e-14 * tc[4]) *
+      0.0302975216627280;
+    // species 7: CH2
+    result +=
+      y[7] *
+      (+2.87410113e+00 + 3.65639292e-03 * tc[1] - 1.40894597e-06 * tc[2] +
+       2.60179549e-10 * tc[3] - 1.87727567e-14 * tc[4]) *
+      0.0712910814857061;
+    // species 8: CH2(S)
+    result +=
+      y[8] *
+      (+2.29203842e+00 + 4.65588637e-03 * tc[1] - 2.01191947e-06 * tc[2] +
+       4.17906000e-10 * tc[3] - 3.39716365e-14 * tc[4]) *
+      0.0712910814857061;
+    // species 9: CH3
+    result +=
+      y[9] *
+      (+2.28571772e+00 + 7.23990037e-03 * tc[1] - 2.98714348e-06 * tc[2] +
+       5.95684644e-10 * tc[3] - 4.67154394e-14 * tc[4]) *
+      0.0665114732291320;
+    // species 10: CH4
+    result +=
+      y[10] *
+      (+7.48514950e-02 + 1.33909467e-02 * tc[1] - 5.73285809e-06 * tc[2] +
+       1.22292535e-09 * tc[3] - 1.01815230e-13 * tc[4]) *
+      0.0623324814560868;
+    // species 11: CO
+    result +=
+      y[11] *
+      (+2.71518561e+00 + 2.06252743e-03 * tc[1] - 9.98825771e-07 * tc[2] +
+       2.30053008e-10 * tc[3] - 2.03647716e-14 * tc[4]) *
+      0.0357015351660121;
+    // species 12: CO2
+    result +=
+      y[12] *
+      (+3.85746029e+00 + 4.41437026e-03 * tc[1] - 2.21481404e-06 * tc[2] +
+       5.23490188e-10 * tc[3] - 4.72084164e-14 * tc[4]) *
+      0.0227226249176305;
+    // species 13: HCO
+    result +=
+      y[13] *
+      (+2.77217438e+00 + 4.95695526e-03 * tc[1] - 2.48445613e-06 * tc[2] +
+       5.89161778e-10 * tc[3] - 5.33508711e-14 * tc[4]) *
+      0.0344613688055690;
+    // species 14: CH2O
+    result +=
+      y[14] *
+      (+1.76069008e+00 + 9.20000082e-03 * tc[1] - 4.42258813e-06 * tc[2] +
+       1.00641212e-09 * tc[3] - 8.83855640e-14 * tc[4]) *
+      0.0333044694598015;
+    // species 15: CH3O
+    result +=
+      y[15] *
+      (+3.77079900e+00 + 7.87149700e-03 * tc[1] - 2.65638400e-06 * tc[2] +
+       3.94443100e-10 * tc[3] - 2.11261600e-14 * tc[4]) *
+      0.0322227234645872;
+    // species 16: C2H4
+    result +=
+      y[16] *
+      (+2.03611116e+00 + 1.46454151e-02 * tc[1] - 6.71077915e-06 * tc[2] +
+       1.47222923e-09 * tc[3] - 1.25706061e-13 * tc[4]) *
+      0.0356455407428531;
+    // species 17: C2H5
+    result +=
+      y[17] *
+      (+1.95465642e+00 + 1.73972722e-02 * tc[1] - 7.98206668e-06 * tc[2] +
+       1.75217689e-09 * tc[3] - 1.49641576e-13 * tc[4]) *
+      0.0344091941366733;
+    // species 18: C2H6
+    result +=
+      y[18] *
+      (+1.07188150e+00 + 2.16852677e-02 * tc[1] - 1.00256067e-05 * tc[2] +
+       2.21412001e-09 * tc[3] - 1.90002890e-13 * tc[4]) *
+      0.0332557366145660;
+    // species 19: N2
+    result +=
+      y[19] *
+      (+2.92664000e+00 + 1.48797680e-03 * tc[1] - 5.68476000e-07 * tc[2] +
+       1.00970380e-10 * tc[3] - 6.75335100e-15 * tc[4]) *
+      0.0356964374955379;
+  }
+
+  // species with no change at a midpoint T
+  // species 20: AR
+  result += y[20] *
+            (+2.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
+             0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4]) *
+            0.0250312891113892;
+
+  *cpbs = result * 8.31446261815324e+07;
+}
+
+// Returns the mean specific heat at CP (Eq. 34)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKCPBS_tmp(const amrex::Real tT, const amrex::Real y[21], amrex::Real& cpbs)
+{
+  amrex::Real result = 0.0;
+  const amrex::Real tc[5] = {
+    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+
+  // compute Cp/R at the given temperature
+
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 0: H2
+    result +=
+      y[0] *
+      (+2.34433112e+00 + 7.98052075e-03 * tc[1] - 1.94781510e-05 * tc[2] +
+       2.01572094e-08 * tc[3] - 7.37611761e-12 * tc[4]);
+    // species 1: H
+    result +=
+      y[1] *
+      (+2.50000000e+00 + 7.05332819e-13 * tc[1] - 1.99591964e-15 * tc[2] +
+       2.30081632e-18 * tc[3] - 9.27732332e-22 * tc[4]);
+    // species 2: O
+    result +=
+      y[2] *
+      (+3.16826710e+00 - 3.27931884e-03 * tc[1] + 6.64306396e-06 * tc[2] -
+       6.12806624e-09 * tc[3] + 2.11265971e-12 * tc[4]);
+    // species 3: O2
+    result +=
+      y[3] *
+      (+3.78245636e+00 - 2.99673416e-03 * tc[1] + 9.84730201e-06 * tc[2] -
+       9.68129509e-09 * tc[3] + 3.24372837e-12 * tc[4]);
+    // species 4: OH
+    result +=
+      y[4] *
+      (+3.99201543e+00 - 2.40131752e-03 * tc[1] + 4.61793841e-06 * tc[2] -
+       3.88113333e-09 * tc[3] + 1.36411470e-12 * tc[4]);
+    // species 5: H2O
+    result +=
+      y[5] *
+      (+4.19864056e+00 - 2.03643410e-03 * tc[1] + 6.52040211e-06 * tc[2] -
+       5.48797062e-09 * tc[3] + 1.77197817e-12 * tc[4]);
+    // species 6: HO2
+    result +=
+      y[6] *
+      (+4.30179801e+00 - 4.74912051e-03 * tc[1] + 2.11582891e-05 * tc[2] -
+       2.42763894e-08 * tc[3] + 9.29225124e-12 * tc[4]);
+    // species 7: CH2
+    result +=
+      y[7] *
+      (+3.76267867e+00 + 9.68872143e-04 * tc[1] + 2.79489841e-06 * tc[2] -
+       3.85091153e-09 * tc[3] + 1.68741719e-12 * tc[4]);
+    // species 8: CH2(S)
+    result +=
+      y[8] *
+      (+4.19860411e+00 - 2.36661419e-03 * tc[1] + 8.23296220e-06 * tc[2] -
+       6.68815981e-09 * tc[3] + 1.94314737e-12 * tc[4]);
+    // species 9: CH3
+    result +=
+      y[9] *
+      (+3.67359040e+00 + 2.01095175e-03 * tc[1] + 5.73021856e-06 * tc[2] -
+       6.87117425e-09 * tc[3] + 2.54385734e-12 * tc[4]);
+    // species 10: CH4
+    result +=
+      y[10] *
+      (+5.14987613e+00 - 1.36709788e-02 * tc[1] + 4.91800599e-05 * tc[2] -
+       4.84743026e-08 * tc[3] + 1.66693956e-11 * tc[4]);
+    // species 11: CO
+    result +=
+      y[11] *
+      (+3.57953347e+00 - 6.10353680e-04 * tc[1] + 1.01681433e-06 * tc[2] +
+       9.07005884e-10 * tc[3] - 9.04424499e-13 * tc[4]);
+    // species 12: CO2
+    result +=
+      y[12] *
+      (+2.35677352e+00 + 8.98459677e-03 * tc[1] - 7.12356269e-06 * tc[2] +
+       2.45919022e-09 * tc[3] - 1.43699548e-13 * tc[4]);
+    // species 13: HCO
+    result +=
+      y[13] *
+      (+4.22118584e+00 - 3.24392532e-03 * tc[1] + 1.37799446e-05 * tc[2] -
+       1.33144093e-08 * tc[3] + 4.33768865e-12 * tc[4]);
+    // species 14: CH2O
+    result +=
+      y[14] *
+      (+4.79372315e+00 - 9.90833369e-03 * tc[1] + 3.73220008e-05 * tc[2] -
+       3.79285261e-08 * tc[3] + 1.31772652e-11 * tc[4]);
+    // species 15: CH3O
+    result +=
+      y[15] *
+      (+2.10620400e+00 + 7.21659500e-03 * tc[1] + 5.33847200e-06 * tc[2] -
+       7.37763600e-09 * tc[3] + 2.07561000e-12 * tc[4]);
+    // species 16: C2H4
+    result +=
+      y[16] *
+      (+3.95920148e+00 - 7.57052247e-03 * tc[1] + 5.70990292e-05 * tc[2] -
+       6.91588753e-08 * tc[3] + 2.69884373e-11 * tc[4]);
+    // species 17: C2H5
+    result +=
+      y[17] *
+      (+4.30646568e+00 - 4.18658892e-03 * tc[1] + 4.97142807e-05 * tc[2] -
+       5.99126606e-08 * tc[3] + 2.30509004e-11 * tc[4]);
+    // species 18: C2H6
+    result +=
+      y[18] *
+      (+4.29142492e+00 - 5.50154270e-03 * tc[1] + 5.99438288e-05 * tc[2] -
+       7.08466285e-08 * tc[3] + 2.68685771e-11 * tc[4]);
+    // species 19: N2
+    result +=
+      y[19] *
+      (+3.29867700e+00 + 1.40824040e-03 * tc[1] - 3.96322200e-06 * tc[2] +
+       5.64151500e-09 * tc[3] - 2.44485400e-12 * tc[4]);
+  } else {
+    // species 0: H2
+    result +=
+      y[0] *
+      (+3.33727920e+00 - 4.94024731e-05 * tc[1] + 4.99456778e-07 * tc[2] -
+       1.79566394e-10 * tc[3] + 2.00255376e-14 * tc[4]);
+    // species 1: H
+    result +=
+      y[1] *
+      (+2.50000001e+00 - 2.30842973e-11 * tc[1] + 1.61561948e-14 * tc[2] -
+       4.73515235e-18 * tc[3] + 4.98197357e-22 * tc[4]);
+    // species 2: O
+    result +=
+      y[2] *
+      (+2.56942078e+00 - 8.59741137e-05 * tc[1] + 4.19484589e-08 * tc[2] -
+       1.00177799e-11 * tc[3] + 1.22833691e-15 * tc[4]);
+    // species 3: O2
+    result +=
+      y[3] *
+      (+3.28253784e+00 + 1.48308754e-03 * tc[1] - 7.57966669e-07 * tc[2] +
+       2.09470555e-10 * tc[3] - 2.16717794e-14 * tc[4]);
+    // species 4: OH
+    result +=
+      y[4] *
+      (+3.09288767e+00 + 5.48429716e-04 * tc[1] + 1.26505228e-07 * tc[2] -
+       8.79461556e-11 * tc[3] + 1.17412376e-14 * tc[4]);
+    // species 5: H2O
+    result +=
+      y[5] *
+      (+3.03399249e+00 + 2.17691804e-03 * tc[1] - 1.64072518e-07 * tc[2] -
+       9.70419870e-11 * tc[3] + 1.68200992e-14 * tc[4]);
+    // species 6: HO2
+    result +=
+      y[6] *
+      (+4.01721090e+00 + 2.23982013e-03 * tc[1] - 6.33658150e-07 * tc[2] +
+       1.14246370e-10 * tc[3] - 1.07908535e-14 * tc[4]);
+    // species 7: CH2
+    result +=
+      y[7] *
+      (+2.87410113e+00 + 3.65639292e-03 * tc[1] - 1.40894597e-06 * tc[2] +
+       2.60179549e-10 * tc[3] - 1.87727567e-14 * tc[4]);
+    // species 8: CH2(S)
+    result +=
+      y[8] *
+      (+2.29203842e+00 + 4.65588637e-03 * tc[1] - 2.01191947e-06 * tc[2] +
+       4.17906000e-10 * tc[3] - 3.39716365e-14 * tc[4]);
+    // species 9: CH3
+    result +=
+      y[9] *
+      (+2.28571772e+00 + 7.23990037e-03 * tc[1] - 2.98714348e-06 * tc[2] +
+       5.95684644e-10 * tc[3] - 4.67154394e-14 * tc[4]);
+    // species 10: CH4
+    result +=
+      y[10] *
+      (+7.48514950e-02 + 1.33909467e-02 * tc[1] - 5.73285809e-06 * tc[2] +
+       1.22292535e-09 * tc[3] - 1.01815230e-13 * tc[4]);
+    // species 11: CO
+    result +=
+      y[11] *
+      (+2.71518561e+00 + 2.06252743e-03 * tc[1] - 9.98825771e-07 * tc[2] +
+       2.30053008e-10 * tc[3] - 2.03647716e-14 * tc[4]);
+    // species 12: CO2
+    result +=
+      y[12] *
+      (+3.85746029e+00 + 4.41437026e-03 * tc[1] - 2.21481404e-06 * tc[2] +
+       5.23490188e-10 * tc[3] - 4.72084164e-14 * tc[4]);
+    // species 13: HCO
+    result +=
+      y[13] *
+      (+2.77217438e+00 + 4.95695526e-03 * tc[1] - 2.48445613e-06 * tc[2] +
+       5.89161778e-10 * tc[3] - 5.33508711e-14 * tc[4]);
+    // species 14: CH2O
+    result +=
+      y[14] *
+      (+1.76069008e+00 + 9.20000082e-03 * tc[1] - 4.42258813e-06 * tc[2] +
+       1.00641212e-09 * tc[3] - 8.83855640e-14 * tc[4]);
+    // species 15: CH3O
+    result +=
+      y[15] *
+      (+3.77079900e+00 + 7.87149700e-03 * tc[1] - 2.65638400e-06 * tc[2] +
+       3.94443100e-10 * tc[3] - 2.11261600e-14 * tc[4]);
+    // species 16: C2H4
+    result +=
+      y[16] *
+      (+2.03611116e+00 + 1.46454151e-02 * tc[1] - 6.71077915e-06 * tc[2] +
+       1.47222923e-09 * tc[3] - 1.25706061e-13 * tc[4]);
+    // species 17: C2H5
+    result +=
+      y[17] *
+      (+1.95465642e+00 + 1.73972722e-02 * tc[1] - 7.98206668e-06 * tc[2] +
+       1.75217689e-09 * tc[3] - 1.49641576e-13 * tc[4]);
+    // species 18: C2H6
+    result +=
+      y[18] *
+      (+1.07188150e+00 + 2.16852677e-02 * tc[1] - 1.00256067e-05 * tc[2] +
+       2.21412001e-09 * tc[3] - 1.90002890e-13 * tc[4]);
+    // species 19: N2
+    result +=
+      y[19] *
+      (+2.92664000e+00 + 1.48797680e-03 * tc[1] - 5.68476000e-07 * tc[2] +
+       1.00970380e-10 * tc[3] - 6.75335100e-15 * tc[4]);
+  }
+
+  // species with no change at a midpoint T
+  // species 20: AR
+  result += y[20] *
+            (+2.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
+             0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4]);
+
+  cpbs = result * 8.31446261815324e+07;
+}
+
+#endif
+
 // Returns the mean specific heat at CV (Eq. 35)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVBL(const amrex::Real* T, const amrex::Real* x, amrex::Real* cvbl)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1579,7 +2417,7 @@ CKCVBL(const amrex::Real* T, const amrex::Real* x, amrex::Real* cvbl)
   cv_R(cvor, tc);
 
   // perform dot product
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     result += x[id] * cvor[id];
   }
 
@@ -1590,39 +2428,263 @@ CKCVBL(const amrex::Real* T, const amrex::Real* x, amrex::Real* cvbl)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVBS(const amrex::Real* T, const amrex::Real* y, amrex::Real* cvbs)
 {
-  amrex::Real result = 0;
-  amrex::Real tT = *T; // temporary temperature
+  amrex::Real result = 0.0;
+  const amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real cvor[21];                               //  temporary storage
-  amrex::Real imw[21];
+  // compute Cv/R at the given temperature
 
-  get_imw(imw);
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 0: H2
+    result +=
+      y[0] *
+      (+1.34433112e+00 + 7.98052075e-03 * tc[1] - 1.94781510e-05 * tc[2] +
+       2.01572094e-08 * tc[3] - 7.37611761e-12 * tc[4]) *
+      0.4960317460317460;
+    // species 1: H
+    result +=
+      y[1] *
+      (+1.50000000e+00 + 7.05332819e-13 * tc[1] - 1.99591964e-15 * tc[2] +
+       2.30081632e-18 * tc[3] - 9.27732332e-22 * tc[4]) *
+      0.9920634920634921;
+    // species 2: O
+    result +=
+      y[2] *
+      (+2.16826710e+00 - 3.27931884e-03 * tc[1] + 6.64306396e-06 * tc[2] -
+       6.12806624e-09 * tc[3] + 2.11265971e-12 * tc[4]) *
+      0.0625039064941559;
+    // species 3: O2
+    result +=
+      y[3] *
+      (+2.78245636e+00 - 2.99673416e-03 * tc[1] + 9.84730201e-06 * tc[2] -
+       9.68129509e-09 * tc[3] + 3.24372837e-12 * tc[4]) *
+      0.0312519532470779;
+    // species 4: OH
+    result +=
+      y[4] *
+      (+2.99201543e+00 - 2.40131752e-03 * tc[1] + 4.61793841e-06 * tc[2] -
+       3.88113333e-09 * tc[3] + 1.36411470e-12 * tc[4]) *
+      0.0587993179279120;
+    // species 5: H2O
+    result +=
+      y[5] *
+      (+3.19864056e+00 - 2.03643410e-03 * tc[1] + 6.52040211e-06 * tc[2] -
+       5.48797062e-09 * tc[3] + 1.77197817e-12 * tc[4]) *
+      0.0555092978073827;
+    // species 6: HO2
+    result +=
+      y[6] *
+      (+3.30179801e+00 - 4.74912051e-03 * tc[1] + 2.11582891e-05 * tc[2] -
+       2.42763894e-08 * tc[3] + 9.29225124e-12 * tc[4]) *
+      0.0302975216627280;
+    // species 7: CH2
+    result +=
+      y[7] *
+      (+2.76267867e+00 + 9.68872143e-04 * tc[1] + 2.79489841e-06 * tc[2] -
+       3.85091153e-09 * tc[3] + 1.68741719e-12 * tc[4]) *
+      0.0712910814857061;
+    // species 8: CH2(S)
+    result +=
+      y[8] *
+      (+3.19860411e+00 - 2.36661419e-03 * tc[1] + 8.23296220e-06 * tc[2] -
+       6.68815981e-09 * tc[3] + 1.94314737e-12 * tc[4]) *
+      0.0712910814857061;
+    // species 9: CH3
+    result +=
+      y[9] *
+      (+2.67359040e+00 + 2.01095175e-03 * tc[1] + 5.73021856e-06 * tc[2] -
+       6.87117425e-09 * tc[3] + 2.54385734e-12 * tc[4]) *
+      0.0665114732291320;
+    // species 10: CH4
+    result +=
+      y[10] *
+      (+4.14987613e+00 - 1.36709788e-02 * tc[1] + 4.91800599e-05 * tc[2] -
+       4.84743026e-08 * tc[3] + 1.66693956e-11 * tc[4]) *
+      0.0623324814560868;
+    // species 11: CO
+    result +=
+      y[11] *
+      (+2.57953347e+00 - 6.10353680e-04 * tc[1] + 1.01681433e-06 * tc[2] +
+       9.07005884e-10 * tc[3] - 9.04424499e-13 * tc[4]) *
+      0.0357015351660121;
+    // species 12: CO2
+    result +=
+      y[12] *
+      (+1.35677352e+00 + 8.98459677e-03 * tc[1] - 7.12356269e-06 * tc[2] +
+       2.45919022e-09 * tc[3] - 1.43699548e-13 * tc[4]) *
+      0.0227226249176305;
+    // species 13: HCO
+    result +=
+      y[13] *
+      (+3.22118584e+00 - 3.24392532e-03 * tc[1] + 1.37799446e-05 * tc[2] -
+       1.33144093e-08 * tc[3] + 4.33768865e-12 * tc[4]) *
+      0.0344613688055690;
+    // species 14: CH2O
+    result +=
+      y[14] *
+      (+3.79372315e+00 - 9.90833369e-03 * tc[1] + 3.73220008e-05 * tc[2] -
+       3.79285261e-08 * tc[3] + 1.31772652e-11 * tc[4]) *
+      0.0333044694598015;
+    // species 15: CH3O
+    result +=
+      y[15] *
+      (+1.10620400e+00 + 7.21659500e-03 * tc[1] + 5.33847200e-06 * tc[2] -
+       7.37763600e-09 * tc[3] + 2.07561000e-12 * tc[4]) *
+      0.0322227234645872;
+    // species 16: C2H4
+    result +=
+      y[16] *
+      (+2.95920148e+00 - 7.57052247e-03 * tc[1] + 5.70990292e-05 * tc[2] -
+       6.91588753e-08 * tc[3] + 2.69884373e-11 * tc[4]) *
+      0.0356455407428531;
+    // species 17: C2H5
+    result +=
+      y[17] *
+      (+3.30646568e+00 - 4.18658892e-03 * tc[1] + 4.97142807e-05 * tc[2] -
+       5.99126606e-08 * tc[3] + 2.30509004e-11 * tc[4]) *
+      0.0344091941366733;
+    // species 18: C2H6
+    result +=
+      y[18] *
+      (+3.29142492e+00 - 5.50154270e-03 * tc[1] + 5.99438288e-05 * tc[2] -
+       7.08466285e-08 * tc[3] + 2.68685771e-11 * tc[4]) *
+      0.0332557366145660;
+    // species 19: N2
+    result +=
+      y[19] *
+      (+2.29867700e+00 + 1.40824040e-03 * tc[1] - 3.96322200e-06 * tc[2] +
+       5.64151500e-09 * tc[3] - 2.44485400e-12 * tc[4]) *
+      0.0356964374955379;
+  } else {
+    // species 0: H2
+    result +=
+      y[0] *
+      (+2.33727920e+00 - 4.94024731e-05 * tc[1] + 4.99456778e-07 * tc[2] -
+       1.79566394e-10 * tc[3] + 2.00255376e-14 * tc[4]) *
+      0.4960317460317460;
+    // species 1: H
+    result +=
+      y[1] *
+      (+1.50000001e+00 - 2.30842973e-11 * tc[1] + 1.61561948e-14 * tc[2] -
+       4.73515235e-18 * tc[3] + 4.98197357e-22 * tc[4]) *
+      0.9920634920634921;
+    // species 2: O
+    result +=
+      y[2] *
+      (+1.56942078e+00 - 8.59741137e-05 * tc[1] + 4.19484589e-08 * tc[2] -
+       1.00177799e-11 * tc[3] + 1.22833691e-15 * tc[4]) *
+      0.0625039064941559;
+    // species 3: O2
+    result +=
+      y[3] *
+      (+2.28253784e+00 + 1.48308754e-03 * tc[1] - 7.57966669e-07 * tc[2] +
+       2.09470555e-10 * tc[3] - 2.16717794e-14 * tc[4]) *
+      0.0312519532470779;
+    // species 4: OH
+    result +=
+      y[4] *
+      (+2.09288767e+00 + 5.48429716e-04 * tc[1] + 1.26505228e-07 * tc[2] -
+       8.79461556e-11 * tc[3] + 1.17412376e-14 * tc[4]) *
+      0.0587993179279120;
+    // species 5: H2O
+    result +=
+      y[5] *
+      (+2.03399249e+00 + 2.17691804e-03 * tc[1] - 1.64072518e-07 * tc[2] -
+       9.70419870e-11 * tc[3] + 1.68200992e-14 * tc[4]) *
+      0.0555092978073827;
+    // species 6: HO2
+    result +=
+      y[6] *
+      (+3.01721090e+00 + 2.23982013e-03 * tc[1] - 6.33658150e-07 * tc[2] +
+       1.14246370e-10 * tc[3] - 1.07908535e-14 * tc[4]) *
+      0.0302975216627280;
+    // species 7: CH2
+    result +=
+      y[7] *
+      (+1.87410113e+00 + 3.65639292e-03 * tc[1] - 1.40894597e-06 * tc[2] +
+       2.60179549e-10 * tc[3] - 1.87727567e-14 * tc[4]) *
+      0.0712910814857061;
+    // species 8: CH2(S)
+    result +=
+      y[8] *
+      (+1.29203842e+00 + 4.65588637e-03 * tc[1] - 2.01191947e-06 * tc[2] +
+       4.17906000e-10 * tc[3] - 3.39716365e-14 * tc[4]) *
+      0.0712910814857061;
+    // species 9: CH3
+    result +=
+      y[9] *
+      (+1.28571772e+00 + 7.23990037e-03 * tc[1] - 2.98714348e-06 * tc[2] +
+       5.95684644e-10 * tc[3] - 4.67154394e-14 * tc[4]) *
+      0.0665114732291320;
+    // species 10: CH4
+    result +=
+      y[10] *
+      (-9.25148505e-01 + 1.33909467e-02 * tc[1] - 5.73285809e-06 * tc[2] +
+       1.22292535e-09 * tc[3] - 1.01815230e-13 * tc[4]) *
+      0.0623324814560868;
+    // species 11: CO
+    result +=
+      y[11] *
+      (+1.71518561e+00 + 2.06252743e-03 * tc[1] - 9.98825771e-07 * tc[2] +
+       2.30053008e-10 * tc[3] - 2.03647716e-14 * tc[4]) *
+      0.0357015351660121;
+    // species 12: CO2
+    result +=
+      y[12] *
+      (+2.85746029e+00 + 4.41437026e-03 * tc[1] - 2.21481404e-06 * tc[2] +
+       5.23490188e-10 * tc[3] - 4.72084164e-14 * tc[4]) *
+      0.0227226249176305;
+    // species 13: HCO
+    result +=
+      y[13] *
+      (+1.77217438e+00 + 4.95695526e-03 * tc[1] - 2.48445613e-06 * tc[2] +
+       5.89161778e-10 * tc[3] - 5.33508711e-14 * tc[4]) *
+      0.0344613688055690;
+    // species 14: CH2O
+    result +=
+      y[14] *
+      (+7.60690080e-01 + 9.20000082e-03 * tc[1] - 4.42258813e-06 * tc[2] +
+       1.00641212e-09 * tc[3] - 8.83855640e-14 * tc[4]) *
+      0.0333044694598015;
+    // species 15: CH3O
+    result +=
+      y[15] *
+      (+2.77079900e+00 + 7.87149700e-03 * tc[1] - 2.65638400e-06 * tc[2] +
+       3.94443100e-10 * tc[3] - 2.11261600e-14 * tc[4]) *
+      0.0322227234645872;
+    // species 16: C2H4
+    result +=
+      y[16] *
+      (+1.03611116e+00 + 1.46454151e-02 * tc[1] - 6.71077915e-06 * tc[2] +
+       1.47222923e-09 * tc[3] - 1.25706061e-13 * tc[4]) *
+      0.0356455407428531;
+    // species 17: C2H5
+    result +=
+      y[17] *
+      (+9.54656420e-01 + 1.73972722e-02 * tc[1] - 7.98206668e-06 * tc[2] +
+       1.75217689e-09 * tc[3] - 1.49641576e-13 * tc[4]) *
+      0.0344091941366733;
+    // species 18: C2H6
+    result +=
+      y[18] *
+      (+7.18815000e-02 + 2.16852677e-02 * tc[1] - 1.00256067e-05 * tc[2] +
+       2.21412001e-09 * tc[3] - 1.90002890e-13 * tc[4]) *
+      0.0332557366145660;
+    // species 19: N2
+    result +=
+      y[19] *
+      (+1.92664000e+00 + 1.48797680e-03 * tc[1] - 5.68476000e-07 * tc[2] +
+       1.00970380e-10 * tc[3] - 6.75335100e-15 * tc[4]) *
+      0.0356964374955379;
+  }
 
-  cv_R(cvor, tc);
-
-  // multiply by y/molecularweight
-  result += cvor[0] * y[0] * imw[0];    // H2
-  result += cvor[1] * y[1] * imw[1];    // H
-  result += cvor[2] * y[2] * imw[2];    // O
-  result += cvor[3] * y[3] * imw[3];    // O2
-  result += cvor[4] * y[4] * imw[4];    // OH
-  result += cvor[5] * y[5] * imw[5];    // H2O
-  result += cvor[6] * y[6] * imw[6];    // HO2
-  result += cvor[7] * y[7] * imw[7];    // CH2
-  result += cvor[8] * y[8] * imw[8];    // CH2(S)
-  result += cvor[9] * y[9] * imw[9];    // CH3
-  result += cvor[10] * y[10] * imw[10]; // CH4
-  result += cvor[11] * y[11] * imw[11]; // CO
-  result += cvor[12] * y[12] * imw[12]; // CO2
-  result += cvor[13] * y[13] * imw[13]; // HCO
-  result += cvor[14] * y[14] * imw[14]; // CH2O
-  result += cvor[15] * y[15] * imw[15]; // CH3O
-  result += cvor[16] * y[16] * imw[16]; // C2H4
-  result += cvor[17] * y[17] * imw[17]; // C2H5
-  result += cvor[18] * y[18] * imw[18]; // C2H6
-  result += cvor[19] * y[19] * imw[19]; // N2
-  result += cvor[20] * y[20] * imw[20]; // AR
+  // species with no change at a midpoint T
+  // species 20: AR
+  result += y[20] *
+            (+1.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
+             0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4]) *
+            0.0250312891113892;
 
   *cvbs = result * 8.31446261815324e+07;
 }
@@ -1631,7 +2693,6 @@ CKCVBS(const amrex::Real* T, const amrex::Real* y, amrex::Real* cvbs)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHBML(const amrex::Real* T, const amrex::Real* x, amrex::Real* hbml)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1641,12 +2702,14 @@ CKHBML(const amrex::Real* T, const amrex::Real* x, amrex::Real* hbml)
   speciesEnthalpy(hml, tc);
 
   // perform dot product
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     result += x[id] * hml[id];
   }
 
   *hbml = result * RT;
 }
+
+#if 0
 
 // Returns mean enthalpy of mixture in mass units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
@@ -1656,30 +2719,541 @@ CKHBMS(const amrex::Real* T, const amrex::Real* y, amrex::Real* hbms)
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real hml[21], tmp[21];                       //  temporary storage
+  amrex::Real hml[21];                       //  temporary storage
   amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  amrex::Real imw[21];
-
-  get_imw(imw);
 
   speciesEnthalpy(hml, tc);
 
-  int id;
-  for (id = 0; id < 21; ++id) {
-    tmp[id] = y[id] * hml[id] * imw[id];
-  }
-  for (id = 0; id < 21; ++id) {
-    result += tmp[id];
+  #pragma unroll
+  for (int id = 0; id < 21; ++id) {
+    result += y[id] * hml[id] * global_imw[id];
   }
 
   *hbms = result * RT;
 }
 
+// Returns mean enthalpy of mixture in mass units
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKHBMS_tmp(const amrex::Real tT, const amrex::Real y[21], amrex::Real& hbms)
+{
+  amrex::Real result = 0;
+  const amrex::Real tc[5] = {
+    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+  amrex::Real hml[21];                       //  temporary storage
+  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
+
+  speciesEnthalpy(hml, tc);
+
+  #pragma unroll
+  for (int id = 0; id < 21; ++id) {
+    result += y[id] * hml[id];
+  }
+
+  hbms = result * RT;
+}
+
+#else
+
+// Returns mean enthalpy of mixture in mass units
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKHBMS(const amrex::Real* T, const amrex::Real* y, amrex::Real* hbms)
+{
+  amrex::Real result = 0.0;
+  const amrex::Real tT = *T; // temporary temperature
+  const amrex::Real tc[5] = {
+    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+  const amrex::Real invT = 1.0 / tT;
+
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 0: H2
+    result += y[0] *
+              (+2.34433112e+00 + 3.99026037e-03 * tc[1] -
+               6.49271700e-06 * tc[2] + 5.03930235e-09 * tc[3] -
+               1.47522352e-12 * tc[4] - 9.17935173e+02 * invT) *
+              0.4960317460317460;
+    // species 1: H
+    result += y[1] *
+              (+2.50000000e+00 + 3.52666409e-13 * tc[1] -
+               6.65306547e-16 * tc[2] + 5.75204080e-19 * tc[3] -
+               1.85546466e-22 * tc[4] + 2.54736599e+04 * invT) *
+              0.9920634920634921;
+    // species 2: O
+    result += y[2] *
+              (+3.16826710e+00 - 1.63965942e-03 * tc[1] +
+               2.21435465e-06 * tc[2] - 1.53201656e-09 * tc[3] +
+               4.22531942e-13 * tc[4] + 2.91222592e+04 * invT) *
+              0.0625039064941559;
+    // species 3: O2
+    result += y[3] *
+              (+3.78245636e+00 - 1.49836708e-03 * tc[1] +
+               3.28243400e-06 * tc[2] - 2.42032377e-09 * tc[3] +
+               6.48745674e-13 * tc[4] - 1.06394356e+03 * invT) *
+              0.0312519532470779;
+    // species 4: OH
+    result += y[4] *
+              (+3.99201543e+00 - 1.20065876e-03 * tc[1] +
+               1.53931280e-06 * tc[2] - 9.70283332e-10 * tc[3] +
+               2.72822940e-13 * tc[4] + 3.61508056e+03 * invT) *
+              0.0587993179279120;
+    // species 5: H2O
+    result += y[5] *
+              (+4.19864056e+00 - 1.01821705e-03 * tc[1] +
+               2.17346737e-06 * tc[2] - 1.37199266e-09 * tc[3] +
+               3.54395634e-13 * tc[4] - 3.02937267e+04 * invT) *
+              0.0555092978073827;
+    // species 6: HO2
+    result += y[6] *
+              (+4.30179801e+00 - 2.37456025e-03 * tc[1] +
+               7.05276303e-06 * tc[2] - 6.06909735e-09 * tc[3] +
+               1.85845025e-12 * tc[4] + 2.94808040e+02 * invT) *
+              0.0302975216627280;
+    // species 7: CH2
+    result += y[7] *
+              (+3.76267867e+00 + 4.84436072e-04 * tc[1] +
+               9.31632803e-07 * tc[2] - 9.62727883e-10 * tc[3] +
+               3.37483438e-13 * tc[4] + 4.60040401e+04 * invT) *
+              0.0712910814857061;
+    // species 8: CH2(S)
+    result += y[8] *
+              (+4.19860411e+00 - 1.18330710e-03 * tc[1] +
+               2.74432073e-06 * tc[2] - 1.67203995e-09 * tc[3] +
+               3.88629474e-13 * tc[4] + 5.04968163e+04 * invT) *
+              0.0712910814857061;
+    // species 9: CH3
+    result += y[9] *
+              (+3.67359040e+00 + 1.00547588e-03 * tc[1] +
+               1.91007285e-06 * tc[2] - 1.71779356e-09 * tc[3] +
+               5.08771468e-13 * tc[4] + 1.64449988e+04 * invT) *
+              0.0665114732291320;
+    // species 10: CH4
+    result += y[10] *
+              (+5.14987613e+00 - 6.83548940e-03 * tc[1] +
+               1.63933533e-05 * tc[2] - 1.21185757e-08 * tc[3] +
+               3.33387912e-12 * tc[4] - 1.02466476e+04 * invT) *
+              0.0623324814560868;
+    // species 11: CO
+    result += y[11] *
+              (+3.57953347e+00 - 3.05176840e-04 * tc[1] +
+               3.38938110e-07 * tc[2] + 2.26751471e-10 * tc[3] -
+               1.80884900e-13 * tc[4] - 1.43440860e+04 * invT) *
+              0.0357015351660121;
+    // species 12: CO2
+    result += y[12] *
+              (+2.35677352e+00 + 4.49229839e-03 * tc[1] -
+               2.37452090e-06 * tc[2] + 6.14797555e-10 * tc[3] -
+               2.87399096e-14 * tc[4] - 4.83719697e+04 * invT) *
+              0.0227226249176305;
+    // species 13: HCO
+    result += y[13] *
+              (+4.22118584e+00 - 1.62196266e-03 * tc[1] +
+               4.59331487e-06 * tc[2] - 3.32860233e-09 * tc[3] +
+               8.67537730e-13 * tc[4] + 3.83956496e+03 * invT) *
+              0.0344613688055690;
+    // species 14: CH2O
+    result += y[14] *
+              (+4.79372315e+00 - 4.95416684e-03 * tc[1] +
+               1.24406669e-05 * tc[2] - 9.48213152e-09 * tc[3] +
+               2.63545304e-12 * tc[4] - 1.43089567e+04 * invT) *
+              0.0333044694598015;
+    // species 15: CH3O
+    result += y[15] *
+              (+2.10620400e+00 + 3.60829750e-03 * tc[1] +
+               1.77949067e-06 * tc[2] - 1.84440900e-09 * tc[3] +
+               4.15122000e-13 * tc[4] + 9.78601100e+02 * invT) *
+              0.0322227234645872;
+    // species 16: C2H4
+    result += y[16] *
+              (+3.95920148e+00 - 3.78526124e-03 * tc[1] +
+               1.90330097e-05 * tc[2] - 1.72897188e-08 * tc[3] +
+               5.39768746e-12 * tc[4] + 5.08977593e+03 * invT) *
+              0.0356455407428531;
+    // species 17: C2H5
+    result += y[17] *
+              (+4.30646568e+00 - 2.09329446e-03 * tc[1] +
+               1.65714269e-05 * tc[2] - 1.49781651e-08 * tc[3] +
+               4.61018008e-12 * tc[4] + 1.28416265e+04 * invT) *
+              0.0344091941366733;
+    // species 18: C2H6
+    result += y[18] *
+              (+4.29142492e+00 - 2.75077135e-03 * tc[1] +
+               1.99812763e-05 * tc[2] - 1.77116571e-08 * tc[3] +
+               5.37371542e-12 * tc[4] - 1.15222055e+04 * invT) *
+              0.0332557366145660;
+    // species 19: N2
+    result += y[19] *
+              (+3.29867700e+00 + 7.04120200e-04 * tc[1] -
+               1.32107400e-06 * tc[2] + 1.41037875e-09 * tc[3] -
+               4.88970800e-13 * tc[4] - 1.02089990e+03 * invT) *
+              0.0356964374955379;
+  } else {
+    // species 0: H2
+    result += y[0] *
+              (+3.33727920e+00 - 2.47012365e-05 * tc[1] +
+               1.66485593e-07 * tc[2] - 4.48915985e-11 * tc[3] +
+               4.00510752e-15 * tc[4] - 9.50158922e+02 * invT) *
+              0.4960317460317460;
+    // species 1: H
+    result += y[1] *
+              (+2.50000001e+00 - 1.15421486e-11 * tc[1] +
+               5.38539827e-15 * tc[2] - 1.18378809e-18 * tc[3] +
+               9.96394714e-23 * tc[4] + 2.54736599e+04 * invT) *
+              0.9920634920634921;
+    // species 2: O
+    result += y[2] *
+              (+2.56942078e+00 - 4.29870569e-05 * tc[1] +
+               1.39828196e-08 * tc[2] - 2.50444497e-12 * tc[3] +
+               2.45667382e-16 * tc[4] + 2.92175791e+04 * invT) *
+              0.0625039064941559;
+    // species 3: O2
+    result += y[3] *
+              (+3.28253784e+00 + 7.41543770e-04 * tc[1] -
+               2.52655556e-07 * tc[2] + 5.23676387e-11 * tc[3] -
+               4.33435588e-15 * tc[4] - 1.08845772e+03 * invT) *
+              0.0312519532470779;
+    // species 4: OH
+    result += y[4] *
+              (+3.09288767e+00 + 2.74214858e-04 * tc[1] +
+               4.21684093e-08 * tc[2] - 2.19865389e-11 * tc[3] +
+               2.34824752e-15 * tc[4] + 3.85865700e+03 * invT) *
+              0.0587993179279120;
+    // species 5: H2O
+    result += y[5] *
+              (+3.03399249e+00 + 1.08845902e-03 * tc[1] -
+               5.46908393e-08 * tc[2] - 2.42604967e-11 * tc[3] +
+               3.36401984e-15 * tc[4] - 3.00042971e+04 * invT) *
+              0.0555092978073827;
+    // species 6: HO2
+    result += y[6] *
+              (+4.01721090e+00 + 1.11991006e-03 * tc[1] -
+               2.11219383e-07 * tc[2] + 2.85615925e-11 * tc[3] -
+               2.15817070e-15 * tc[4] + 1.11856713e+02 * invT) *
+              0.0302975216627280;
+    // species 7: CH2
+    result += y[7] *
+              (+2.87410113e+00 + 1.82819646e-03 * tc[1] -
+               4.69648657e-07 * tc[2] + 6.50448872e-11 * tc[3] -
+               3.75455134e-15 * tc[4] + 4.62636040e+04 * invT) *
+              0.0712910814857061;
+    // species 8: CH2(S)
+    result += y[8] *
+              (+2.29203842e+00 + 2.32794318e-03 * tc[1] -
+               6.70639823e-07 * tc[2] + 1.04476500e-10 * tc[3] -
+               6.79432730e-15 * tc[4] + 5.09259997e+04 * invT) *
+              0.0712910814857061;
+    // species 9: CH3
+    result += y[9] *
+              (+2.28571772e+00 + 3.61995018e-03 * tc[1] -
+               9.95714493e-07 * tc[2] + 1.48921161e-10 * tc[3] -
+               9.34308788e-15 * tc[4] + 1.67755843e+04 * invT) *
+              0.0665114732291320;
+    // species 10: CH4
+    result += y[10] *
+              (+7.48514950e-02 + 6.69547335e-03 * tc[1] -
+               1.91095270e-06 * tc[2] + 3.05731338e-10 * tc[3] -
+               2.03630460e-14 * tc[4] - 9.46834459e+03 * invT) *
+              0.0623324814560868;
+    // species 11: CO
+    result += y[11] *
+              (+2.71518561e+00 + 1.03126372e-03 * tc[1] -
+               3.32941924e-07 * tc[2] + 5.75132520e-11 * tc[3] -
+               4.07295432e-15 * tc[4] - 1.41518724e+04 * invT) *
+              0.0357015351660121;
+    // species 12: CO2
+    result += y[12] *
+              (+3.85746029e+00 + 2.20718513e-03 * tc[1] -
+               7.38271347e-07 * tc[2] + 1.30872547e-10 * tc[3] -
+               9.44168328e-15 * tc[4] - 4.87591660e+04 * invT) *
+              0.0227226249176305;
+    // species 13: HCO
+    result += y[13] *
+              (+2.77217438e+00 + 2.47847763e-03 * tc[1] -
+               8.28152043e-07 * tc[2] + 1.47290445e-10 * tc[3] -
+               1.06701742e-14 * tc[4] + 4.01191815e+03 * invT) *
+              0.0344613688055690;
+    // species 14: CH2O
+    result += y[14] *
+              (+1.76069008e+00 + 4.60000041e-03 * tc[1] -
+               1.47419604e-06 * tc[2] + 2.51603030e-10 * tc[3] -
+               1.76771128e-14 * tc[4] - 1.39958323e+04 * invT) *
+              0.0333044694598015;
+    // species 15: CH3O
+    result += y[15] *
+              (+3.77079900e+00 + 3.93574850e-03 * tc[1] -
+               8.85461333e-07 * tc[2] + 9.86107750e-11 * tc[3] -
+               4.22523200e-15 * tc[4] + 1.27832520e+02 * invT) *
+              0.0322227234645872;
+    // species 16: C2H4
+    result += y[16] *
+              (+2.03611116e+00 + 7.32270755e-03 * tc[1] -
+               2.23692638e-06 * tc[2] + 3.68057308e-10 * tc[3] -
+               2.51412122e-14 * tc[4] + 4.93988614e+03 * invT) *
+              0.0356455407428531;
+    // species 17: C2H5
+    result += y[17] *
+              (+1.95465642e+00 + 8.69863610e-03 * tc[1] -
+               2.66068889e-06 * tc[2] + 4.38044223e-10 * tc[3] -
+               2.99283152e-14 * tc[4] + 1.28575200e+04 * invT) *
+              0.0344091941366733;
+    // species 18: C2H6
+    result += y[18] *
+              (+1.07188150e+00 + 1.08426339e-02 * tc[1] -
+               3.34186890e-06 * tc[2] + 5.53530003e-10 * tc[3] -
+               3.80005780e-14 * tc[4] - 1.14263932e+04 * invT) *
+              0.0332557366145660;
+    // species 19: N2
+    result += y[19] *
+              (+2.92664000e+00 + 7.43988400e-04 * tc[1] -
+               1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
+               1.35067020e-15 * tc[4] - 9.22797700e+02 * invT) *
+              0.0356964374955379;
+  }
+
+  // species with no change at a midpoint T
+  // species 20: AR
+  result +=
+    y[20] *
+    (+2.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
+     0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT) *
+    0.0250312891113892;
+
+  const amrex::Real RT = 8.31446261815324e+07 * tT; // R*T
+
+  *hbms = result * RT;
+}
+
+// Returns mean enthalpy of mixture in mass units
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKHBMS_tmp(const amrex::Real tT, const amrex::Real y[21], amrex::Real& hbms)
+{
+  amrex::Real result = 0.0;
+  const amrex::Real tc[5] = {
+    0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+  const amrex::Real invT = 1.0 / tT;
+
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 0: H2
+    result += y[0] *
+              (+2.34433112e+00 + 3.99026037e-03 * tc[1] -
+               6.49271700e-06 * tc[2] + 5.03930235e-09 * tc[3] -
+               1.47522352e-12 * tc[4] - 9.17935173e+02 * invT);
+    // species 1: H
+    result += y[1] *
+              (+2.50000000e+00 + 3.52666409e-13 * tc[1] -
+               6.65306547e-16 * tc[2] + 5.75204080e-19 * tc[3] -
+               1.85546466e-22 * tc[4] + 2.54736599e+04 * invT);
+    // species 2: O
+    result += y[2] *
+              (+3.16826710e+00 - 1.63965942e-03 * tc[1] +
+               2.21435465e-06 * tc[2] - 1.53201656e-09 * tc[3] +
+               4.22531942e-13 * tc[4] + 2.91222592e+04 * invT);
+    // species 3: O2
+    result += y[3] *
+              (+3.78245636e+00 - 1.49836708e-03 * tc[1] +
+               3.28243400e-06 * tc[2] - 2.42032377e-09 * tc[3] +
+               6.48745674e-13 * tc[4] - 1.06394356e+03 * invT);
+    // species 4: OH
+    result += y[4] *
+              (+3.99201543e+00 - 1.20065876e-03 * tc[1] +
+               1.53931280e-06 * tc[2] - 9.70283332e-10 * tc[3] +
+               2.72822940e-13 * tc[4] + 3.61508056e+03 * invT);
+    // species 5: H2O
+    result += y[5] *
+              (+4.19864056e+00 - 1.01821705e-03 * tc[1] +
+               2.17346737e-06 * tc[2] - 1.37199266e-09 * tc[3] +
+               3.54395634e-13 * tc[4] - 3.02937267e+04 * invT);
+    // species 6: HO2
+    result += y[6] *
+              (+4.30179801e+00 - 2.37456025e-03 * tc[1] +
+               7.05276303e-06 * tc[2] - 6.06909735e-09 * tc[3] +
+               1.85845025e-12 * tc[4] + 2.94808040e+02 * invT);
+    // species 7: CH2
+    result += y[7] *
+              (+3.76267867e+00 + 4.84436072e-04 * tc[1] +
+               9.31632803e-07 * tc[2] - 9.62727883e-10 * tc[3] +
+               3.37483438e-13 * tc[4] + 4.60040401e+04 * invT);
+    // species 8: CH2(S)
+    result += y[8] *
+              (+4.19860411e+00 - 1.18330710e-03 * tc[1] +
+               2.74432073e-06 * tc[2] - 1.67203995e-09 * tc[3] +
+               3.88629474e-13 * tc[4] + 5.04968163e+04 * invT);
+    // species 9: CH3
+    result += y[9] *
+              (+3.67359040e+00 + 1.00547588e-03 * tc[1] +
+               1.91007285e-06 * tc[2] - 1.71779356e-09 * tc[3] +
+               5.08771468e-13 * tc[4] + 1.64449988e+04 * invT);
+    // species 10: CH4
+    result += y[10] *
+              (+5.14987613e+00 - 6.83548940e-03 * tc[1] +
+               1.63933533e-05 * tc[2] - 1.21185757e-08 * tc[3] +
+               3.33387912e-12 * tc[4] - 1.02466476e+04 * invT);
+    // species 11: CO
+    result += y[11] *
+              (+3.57953347e+00 - 3.05176840e-04 * tc[1] +
+               3.38938110e-07 * tc[2] + 2.26751471e-10 * tc[3] -
+               1.80884900e-13 * tc[4] - 1.43440860e+04 * invT);
+    // species 12: CO2
+    result += y[12] *
+              (+2.35677352e+00 + 4.49229839e-03 * tc[1] -
+               2.37452090e-06 * tc[2] + 6.14797555e-10 * tc[3] -
+               2.87399096e-14 * tc[4] - 4.83719697e+04 * invT);
+    // species 13: HCO
+    result += y[13] *
+              (+4.22118584e+00 - 1.62196266e-03 * tc[1] +
+               4.59331487e-06 * tc[2] - 3.32860233e-09 * tc[3] +
+               8.67537730e-13 * tc[4] + 3.83956496e+03 * invT);
+    // species 14: CH2O
+    result += y[14] *
+              (+4.79372315e+00 - 4.95416684e-03 * tc[1] +
+               1.24406669e-05 * tc[2] - 9.48213152e-09 * tc[3] +
+               2.63545304e-12 * tc[4] - 1.43089567e+04 * invT);
+    // species 15: CH3O
+    result += y[15] *
+              (+2.10620400e+00 + 3.60829750e-03 * tc[1] +
+               1.77949067e-06 * tc[2] - 1.84440900e-09 * tc[3] +
+               4.15122000e-13 * tc[4] + 9.78601100e+02 * invT);
+    // species 16: C2H4
+    result += y[16] *
+              (+3.95920148e+00 - 3.78526124e-03 * tc[1] +
+               1.90330097e-05 * tc[2] - 1.72897188e-08 * tc[3] +
+               5.39768746e-12 * tc[4] + 5.08977593e+03 * invT);
+    // species 17: C2H5
+    result += y[17] *
+              (+4.30646568e+00 - 2.09329446e-03 * tc[1] +
+               1.65714269e-05 * tc[2] - 1.49781651e-08 * tc[3] +
+               4.61018008e-12 * tc[4] + 1.28416265e+04 * invT);
+    // species 18: C2H6
+    result += y[18] *
+              (+4.29142492e+00 - 2.75077135e-03 * tc[1] +
+               1.99812763e-05 * tc[2] - 1.77116571e-08 * tc[3] +
+               5.37371542e-12 * tc[4] - 1.15222055e+04 * invT);
+    // species 19: N2
+    result += y[19] *
+              (+3.29867700e+00 + 7.04120200e-04 * tc[1] -
+               1.32107400e-06 * tc[2] + 1.41037875e-09 * tc[3] -
+               4.88970800e-13 * tc[4] - 1.02089990e+03 * invT);
+  } else {
+    // species 0: H2
+    result += y[0] *
+              (+3.33727920e+00 - 2.47012365e-05 * tc[1] +
+               1.66485593e-07 * tc[2] - 4.48915985e-11 * tc[3] +
+               4.00510752e-15 * tc[4] - 9.50158922e+02 * invT);
+    // species 1: H
+    result += y[1] *
+              (+2.50000001e+00 - 1.15421486e-11 * tc[1] +
+               5.38539827e-15 * tc[2] - 1.18378809e-18 * tc[3] +
+               9.96394714e-23 * tc[4] + 2.54736599e+04 * invT);
+    // species 2: O
+    result += y[2] *
+              (+2.56942078e+00 - 4.29870569e-05 * tc[1] +
+               1.39828196e-08 * tc[2] - 2.50444497e-12 * tc[3] +
+               2.45667382e-16 * tc[4] + 2.92175791e+04 * invT);
+    // species 3: O2
+    result += y[3] *
+              (+3.28253784e+00 + 7.41543770e-04 * tc[1] -
+               2.52655556e-07 * tc[2] + 5.23676387e-11 * tc[3] -
+               4.33435588e-15 * tc[4] - 1.08845772e+03 * invT);
+    // species 4: OH
+    result += y[4] *
+              (+3.09288767e+00 + 2.74214858e-04 * tc[1] +
+               4.21684093e-08 * tc[2] - 2.19865389e-11 * tc[3] +
+               2.34824752e-15 * tc[4] + 3.85865700e+03 * invT);
+    // species 5: H2O
+    result += y[5] *
+              (+3.03399249e+00 + 1.08845902e-03 * tc[1] -
+               5.46908393e-08 * tc[2] - 2.42604967e-11 * tc[3] +
+               3.36401984e-15 * tc[4] - 3.00042971e+04 * invT);
+    // species 6: HO2
+    result += y[6] *
+              (+4.01721090e+00 + 1.11991006e-03 * tc[1] -
+               2.11219383e-07 * tc[2] + 2.85615925e-11 * tc[3] -
+               2.15817070e-15 * tc[4] + 1.11856713e+02 * invT);
+    // species 7: CH2
+    result += y[7] *
+              (+2.87410113e+00 + 1.82819646e-03 * tc[1] -
+               4.69648657e-07 * tc[2] + 6.50448872e-11 * tc[3] -
+               3.75455134e-15 * tc[4] + 4.62636040e+04 * invT);
+    // species 8: CH2(S)
+    result += y[8] *
+              (+2.29203842e+00 + 2.32794318e-03 * tc[1] -
+               6.70639823e-07 * tc[2] + 1.04476500e-10 * tc[3] -
+               6.79432730e-15 * tc[4] + 5.09259997e+04 * invT);
+    // species 9: CH3
+    result += y[9] *
+              (+2.28571772e+00 + 3.61995018e-03 * tc[1] -
+               9.95714493e-07 * tc[2] + 1.48921161e-10 * tc[3] -
+               9.34308788e-15 * tc[4] + 1.67755843e+04 * invT);
+    // species 10: CH4
+    result += y[10] *
+              (+7.48514950e-02 + 6.69547335e-03 * tc[1] -
+               1.91095270e-06 * tc[2] + 3.05731338e-10 * tc[3] -
+               2.03630460e-14 * tc[4] - 9.46834459e+03 * invT);
+    // species 11: CO
+    result += y[11] *
+              (+2.71518561e+00 + 1.03126372e-03 * tc[1] -
+               3.32941924e-07 * tc[2] + 5.75132520e-11 * tc[3] -
+               4.07295432e-15 * tc[4] - 1.41518724e+04 * invT);
+    // species 12: CO2
+    result += y[12] *
+              (+3.85746029e+00 + 2.20718513e-03 * tc[1] -
+               7.38271347e-07 * tc[2] + 1.30872547e-10 * tc[3] -
+               9.44168328e-15 * tc[4] - 4.87591660e+04 * invT);
+    // species 13: HCO
+    result += y[13] *
+              (+2.77217438e+00 + 2.47847763e-03 * tc[1] -
+               8.28152043e-07 * tc[2] + 1.47290445e-10 * tc[3] -
+               1.06701742e-14 * tc[4] + 4.01191815e+03 * invT);
+    // species 14: CH2O
+    result += y[14] *
+              (+1.76069008e+00 + 4.60000041e-03 * tc[1] -
+               1.47419604e-06 * tc[2] + 2.51603030e-10 * tc[3] -
+               1.76771128e-14 * tc[4] - 1.39958323e+04 * invT);
+    // species 15: CH3O
+    result += y[15] *
+              (+3.77079900e+00 + 3.93574850e-03 * tc[1] -
+               8.85461333e-07 * tc[2] + 9.86107750e-11 * tc[3] -
+               4.22523200e-15 * tc[4] + 1.27832520e+02 * invT);
+    // species 16: C2H4
+    result += y[16] *
+              (+2.03611116e+00 + 7.32270755e-03 * tc[1] -
+               2.23692638e-06 * tc[2] + 3.68057308e-10 * tc[3] -
+               2.51412122e-14 * tc[4] + 4.93988614e+03 * invT);
+    // species 17: C2H5
+    result += y[17] *
+              (+1.95465642e+00 + 8.69863610e-03 * tc[1] -
+               2.66068889e-06 * tc[2] + 4.38044223e-10 * tc[3] -
+               2.99283152e-14 * tc[4] + 1.28575200e+04 * invT);
+    // species 18: C2H6
+    result += y[18] *
+              (+1.07188150e+00 + 1.08426339e-02 * tc[1] -
+               3.34186890e-06 * tc[2] + 5.53530003e-10 * tc[3] -
+               3.80005780e-14 * tc[4] - 1.14263932e+04 * invT);
+    // species 19: N2
+    result += y[19] *
+              (+2.92664000e+00 + 7.43988400e-04 * tc[1] -
+               1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
+               1.35067020e-15 * tc[4] - 9.22797700e+02 * invT);
+  }
+
+  // species with no change at a midpoint T
+  // species 20: AR
+  result +=
+    y[20] *
+    (+2.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
+     0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT);
+
+  const amrex::Real RT = 8.31446261815324e+07 * tT; // R*T
+
+  hbms = result * RT;
+}
+
+#endif
+
 // get mean internal energy in molar units
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUBML(const amrex::Real* T, const amrex::Real* x, amrex::Real* ubml)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
@@ -1689,7 +3263,7 @@ CKUBML(const amrex::Real* T, const amrex::Real* x, amrex::Real* ubml)
   speciesInternalEnergy(uml, tc);
 
   // perform dot product
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     result += x[id] * uml[id];
   }
 
@@ -1704,36 +3278,262 @@ CKUBMS(const amrex::Real* T, const amrex::Real* y, amrex::Real* ubms)
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
-  amrex::Real ums[21];                                //  temporary energy array
-  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  amrex::Real imw[21];
+  const amrex::Real invT = 1.0 / tT;
 
-  get_imw(imw);
+  // species with midpoint at T=1000 kelvin
+  if (tT < 1000) {
+    // species 0: H2
+    result += y[0] *
+              (+1.34433112e+00 + 3.99026037e-03 * tc[1] -
+               6.49271700e-06 * tc[2] + 5.03930235e-09 * tc[3] -
+               1.47522352e-12 * tc[4] - 9.17935173e+02 * invT) *
+              0.4960317460317460;
+    // species 1: H
+    result += y[1] *
+              (+1.50000000e+00 + 3.52666409e-13 * tc[1] -
+               6.65306547e-16 * tc[2] + 5.75204080e-19 * tc[3] -
+               1.85546466e-22 * tc[4] + 2.54736599e+04 * invT) *
+              0.9920634920634921;
+    // species 2: O
+    result += y[2] *
+              (+2.16826710e+00 - 1.63965942e-03 * tc[1] +
+               2.21435465e-06 * tc[2] - 1.53201656e-09 * tc[3] +
+               4.22531942e-13 * tc[4] + 2.91222592e+04 * invT) *
+              0.0625039064941559;
+    // species 3: O2
+    result += y[3] *
+              (+2.78245636e+00 - 1.49836708e-03 * tc[1] +
+               3.28243400e-06 * tc[2] - 2.42032377e-09 * tc[3] +
+               6.48745674e-13 * tc[4] - 1.06394356e+03 * invT) *
+              0.0312519532470779;
+    // species 4: OH
+    result += y[4] *
+              (+2.99201543e+00 - 1.20065876e-03 * tc[1] +
+               1.53931280e-06 * tc[2] - 9.70283332e-10 * tc[3] +
+               2.72822940e-13 * tc[4] + 3.61508056e+03 * invT) *
+              0.0587993179279120;
+    // species 5: H2O
+    result += y[5] *
+              (+3.19864056e+00 - 1.01821705e-03 * tc[1] +
+               2.17346737e-06 * tc[2] - 1.37199266e-09 * tc[3] +
+               3.54395634e-13 * tc[4] - 3.02937267e+04 * invT) *
+              0.0555092978073827;
+    // species 6: HO2
+    result += y[6] *
+              (+3.30179801e+00 - 2.37456025e-03 * tc[1] +
+               7.05276303e-06 * tc[2] - 6.06909735e-09 * tc[3] +
+               1.85845025e-12 * tc[4] + 2.94808040e+02 * invT) *
+              0.0302975216627280;
+    // species 7: CH2
+    result += y[7] *
+              (+2.76267867e+00 + 4.84436072e-04 * tc[1] +
+               9.31632803e-07 * tc[2] - 9.62727883e-10 * tc[3] +
+               3.37483438e-13 * tc[4] + 4.60040401e+04 * invT) *
+              0.0712910814857061;
+    // species 8: CH2(S)
+    result += y[8] *
+              (+3.19860411e+00 - 1.18330710e-03 * tc[1] +
+               2.74432073e-06 * tc[2] - 1.67203995e-09 * tc[3] +
+               3.88629474e-13 * tc[4] + 5.04968163e+04 * invT) *
+              0.0712910814857061;
+    // species 9: CH3
+    result += y[9] *
+              (+2.67359040e+00 + 1.00547588e-03 * tc[1] +
+               1.91007285e-06 * tc[2] - 1.71779356e-09 * tc[3] +
+               5.08771468e-13 * tc[4] + 1.64449988e+04 * invT) *
+              0.0665114732291320;
+    // species 10: CH4
+    result += y[10] *
+              (+4.14987613e+00 - 6.83548940e-03 * tc[1] +
+               1.63933533e-05 * tc[2] - 1.21185757e-08 * tc[3] +
+               3.33387912e-12 * tc[4] - 1.02466476e+04 * invT) *
+              0.0623324814560868;
+    // species 11: CO
+    result += y[11] *
+              (+2.57953347e+00 - 3.05176840e-04 * tc[1] +
+               3.38938110e-07 * tc[2] + 2.26751471e-10 * tc[3] -
+               1.80884900e-13 * tc[4] - 1.43440860e+04 * invT) *
+              0.0357015351660121;
+    // species 12: CO2
+    result += y[12] *
+              (+1.35677352e+00 + 4.49229839e-03 * tc[1] -
+               2.37452090e-06 * tc[2] + 6.14797555e-10 * tc[3] -
+               2.87399096e-14 * tc[4] - 4.83719697e+04 * invT) *
+              0.0227226249176305;
+    // species 13: HCO
+    result += y[13] *
+              (+3.22118584e+00 - 1.62196266e-03 * tc[1] +
+               4.59331487e-06 * tc[2] - 3.32860233e-09 * tc[3] +
+               8.67537730e-13 * tc[4] + 3.83956496e+03 * invT) *
+              0.0344613688055690;
+    // species 14: CH2O
+    result += y[14] *
+              (+3.79372315e+00 - 4.95416684e-03 * tc[1] +
+               1.24406669e-05 * tc[2] - 9.48213152e-09 * tc[3] +
+               2.63545304e-12 * tc[4] - 1.43089567e+04 * invT) *
+              0.0333044694598015;
+    // species 15: CH3O
+    result += y[15] *
+              (+1.10620400e+00 + 3.60829750e-03 * tc[1] +
+               1.77949067e-06 * tc[2] - 1.84440900e-09 * tc[3] +
+               4.15122000e-13 * tc[4] + 9.78601100e+02 * invT) *
+              0.0322227234645872;
+    // species 16: C2H4
+    result += y[16] *
+              (+2.95920148e+00 - 3.78526124e-03 * tc[1] +
+               1.90330097e-05 * tc[2] - 1.72897188e-08 * tc[3] +
+               5.39768746e-12 * tc[4] + 5.08977593e+03 * invT) *
+              0.0356455407428531;
+    // species 17: C2H5
+    result += y[17] *
+              (+3.30646568e+00 - 2.09329446e-03 * tc[1] +
+               1.65714269e-05 * tc[2] - 1.49781651e-08 * tc[3] +
+               4.61018008e-12 * tc[4] + 1.28416265e+04 * invT) *
+              0.0344091941366733;
+    // species 18: C2H6
+    result += y[18] *
+              (+3.29142492e+00 - 2.75077135e-03 * tc[1] +
+               1.99812763e-05 * tc[2] - 1.77116571e-08 * tc[3] +
+               5.37371542e-12 * tc[4] - 1.15222055e+04 * invT) *
+              0.0332557366145660;
+    // species 19: N2
+    result += y[19] *
+              (+2.29867700e+00 + 7.04120200e-04 * tc[1] -
+               1.32107400e-06 * tc[2] + 1.41037875e-09 * tc[3] -
+               4.88970800e-13 * tc[4] - 1.02089990e+03 * invT) *
+              0.0356964374955379;
+  } else {
+    // species 0: H2
+    result += y[0] *
+              (+2.33727920e+00 - 2.47012365e-05 * tc[1] +
+               1.66485593e-07 * tc[2] - 4.48915985e-11 * tc[3] +
+               4.00510752e-15 * tc[4] - 9.50158922e+02 * invT) *
+              0.4960317460317460;
+    // species 1: H
+    result += y[1] *
+              (+1.50000001e+00 - 1.15421486e-11 * tc[1] +
+               5.38539827e-15 * tc[2] - 1.18378809e-18 * tc[3] +
+               9.96394714e-23 * tc[4] + 2.54736599e+04 * invT) *
+              0.9920634920634921;
+    // species 2: O
+    result += y[2] *
+              (+1.56942078e+00 - 4.29870569e-05 * tc[1] +
+               1.39828196e-08 * tc[2] - 2.50444497e-12 * tc[3] +
+               2.45667382e-16 * tc[4] + 2.92175791e+04 * invT) *
+              0.0625039064941559;
+    // species 3: O2
+    result += y[3] *
+              (+2.28253784e+00 + 7.41543770e-04 * tc[1] -
+               2.52655556e-07 * tc[2] + 5.23676387e-11 * tc[3] -
+               4.33435588e-15 * tc[4] - 1.08845772e+03 * invT) *
+              0.0312519532470779;
+    // species 4: OH
+    result += y[4] *
+              (+2.09288767e+00 + 2.74214858e-04 * tc[1] +
+               4.21684093e-08 * tc[2] - 2.19865389e-11 * tc[3] +
+               2.34824752e-15 * tc[4] + 3.85865700e+03 * invT) *
+              0.0587993179279120;
+    // species 5: H2O
+    result += y[5] *
+              (+2.03399249e+00 + 1.08845902e-03 * tc[1] -
+               5.46908393e-08 * tc[2] - 2.42604967e-11 * tc[3] +
+               3.36401984e-15 * tc[4] - 3.00042971e+04 * invT) *
+              0.0555092978073827;
+    // species 6: HO2
+    result += y[6] *
+              (+3.01721090e+00 + 1.11991006e-03 * tc[1] -
+               2.11219383e-07 * tc[2] + 2.85615925e-11 * tc[3] -
+               2.15817070e-15 * tc[4] + 1.11856713e+02 * invT) *
+              0.0302975216627280;
+    // species 7: CH2
+    result += y[7] *
+              (+1.87410113e+00 + 1.82819646e-03 * tc[1] -
+               4.69648657e-07 * tc[2] + 6.50448872e-11 * tc[3] -
+               3.75455134e-15 * tc[4] + 4.62636040e+04 * invT) *
+              0.0712910814857061;
+    // species 8: CH2(S)
+    result += y[8] *
+              (+1.29203842e+00 + 2.32794318e-03 * tc[1] -
+               6.70639823e-07 * tc[2] + 1.04476500e-10 * tc[3] -
+               6.79432730e-15 * tc[4] + 5.09259997e+04 * invT) *
+              0.0712910814857061;
+    // species 9: CH3
+    result += y[9] *
+              (+1.28571772e+00 + 3.61995018e-03 * tc[1] -
+               9.95714493e-07 * tc[2] + 1.48921161e-10 * tc[3] -
+               9.34308788e-15 * tc[4] + 1.67755843e+04 * invT) *
+              0.0665114732291320;
+    // species 10: CH4
+    result += y[10] *
+              (-9.25148505e-01 + 6.69547335e-03 * tc[1] -
+               1.91095270e-06 * tc[2] + 3.05731338e-10 * tc[3] -
+               2.03630460e-14 * tc[4] - 9.46834459e+03 * invT) *
+              0.0623324814560868;
+    // species 11: CO
+    result += y[11] *
+              (+1.71518561e+00 + 1.03126372e-03 * tc[1] -
+               3.32941924e-07 * tc[2] + 5.75132520e-11 * tc[3] -
+               4.07295432e-15 * tc[4] - 1.41518724e+04 * invT) *
+              0.0357015351660121;
+    // species 12: CO2
+    result += y[12] *
+              (+2.85746029e+00 + 2.20718513e-03 * tc[1] -
+               7.38271347e-07 * tc[2] + 1.30872547e-10 * tc[3] -
+               9.44168328e-15 * tc[4] - 4.87591660e+04 * invT) *
+              0.0227226249176305;
+    // species 13: HCO
+    result += y[13] *
+              (+1.77217438e+00 + 2.47847763e-03 * tc[1] -
+               8.28152043e-07 * tc[2] + 1.47290445e-10 * tc[3] -
+               1.06701742e-14 * tc[4] + 4.01191815e+03 * invT) *
+              0.0344613688055690;
+    // species 14: CH2O
+    result += y[14] *
+              (+7.60690080e-01 + 4.60000041e-03 * tc[1] -
+               1.47419604e-06 * tc[2] + 2.51603030e-10 * tc[3] -
+               1.76771128e-14 * tc[4] - 1.39958323e+04 * invT) *
+              0.0333044694598015;
+    // species 15: CH3O
+    result += y[15] *
+              (+2.77079900e+00 + 3.93574850e-03 * tc[1] -
+               8.85461333e-07 * tc[2] + 9.86107750e-11 * tc[3] -
+               4.22523200e-15 * tc[4] + 1.27832520e+02 * invT) *
+              0.0322227234645872;
+    // species 16: C2H4
+    result += y[16] *
+              (+1.03611116e+00 + 7.32270755e-03 * tc[1] -
+               2.23692638e-06 * tc[2] + 3.68057308e-10 * tc[3] -
+               2.51412122e-14 * tc[4] + 4.93988614e+03 * invT) *
+              0.0356455407428531;
+    // species 17: C2H5
+    result += y[17] *
+              (+9.54656420e-01 + 8.69863610e-03 * tc[1] -
+               2.66068889e-06 * tc[2] + 4.38044223e-10 * tc[3] -
+               2.99283152e-14 * tc[4] + 1.28575200e+04 * invT) *
+              0.0344091941366733;
+    // species 18: C2H6
+    result += y[18] *
+              (+7.18815000e-02 + 1.08426339e-02 * tc[1] -
+               3.34186890e-06 * tc[2] + 5.53530003e-10 * tc[3] -
+               3.80005780e-14 * tc[4] - 1.14263932e+04 * invT) *
+              0.0332557366145660;
+    // species 19: N2
+    result += y[19] *
+              (+1.92664000e+00 + 7.43988400e-04 * tc[1] -
+               1.89492000e-07 * tc[2] + 2.52425950e-11 * tc[3] -
+               1.35067020e-15 * tc[4] - 9.22797700e+02 * invT) *
+              0.0356964374955379;
+  }
 
-  speciesInternalEnergy(ums, tc);
+  // species with no change at a midpoint T
+  // species 20: AR
+  result +=
+    y[20] *
+    (+1.50000000e+00 + 0.00000000e+00 * tc[1] + 0.00000000e+00 * tc[2] +
+     0.00000000e+00 * tc[3] + 0.00000000e+00 * tc[4] - 7.45375000e+02 * invT) *
+    0.0250312891113892;
 
-  // perform dot product + scaling by wt
-  result += y[0] * ums[0] * imw[0];    // H2
-  result += y[1] * ums[1] * imw[1];    // H
-  result += y[2] * ums[2] * imw[2];    // O
-  result += y[3] * ums[3] * imw[3];    // O2
-  result += y[4] * ums[4] * imw[4];    // OH
-  result += y[5] * ums[5] * imw[5];    // H2O
-  result += y[6] * ums[6] * imw[6];    // HO2
-  result += y[7] * ums[7] * imw[7];    // CH2
-  result += y[8] * ums[8] * imw[8];    // CH2(S)
-  result += y[9] * ums[9] * imw[9];    // CH3
-  result += y[10] * ums[10] * imw[10]; // CH4
-  result += y[11] * ums[11] * imw[11]; // CO
-  result += y[12] * ums[12] * imw[12]; // CO2
-  result += y[13] * ums[13] * imw[13]; // HCO
-  result += y[14] * ums[14] * imw[14]; // CH2O
-  result += y[15] * ums[15] * imw[15]; // CH3O
-  result += y[16] * ums[16] * imw[16]; // C2H4
-  result += y[17] * ums[17] * imw[17]; // C2H5
-  result += y[18] * ums[18] * imw[18]; // C2H6
-  result += y[19] * ums[19] * imw[19]; // N2
-  result += y[20] * ums[20] * imw[20]; // AR
+  const amrex::Real RT = 8.31446261815324e+07 * tT; // R*T
 
   *ubms = result * RT;
 }
@@ -1746,7 +3546,6 @@ CKSBML(
   const amrex::Real* x,
   amrex::Real* sbml)
 {
-  int id; // loop counter
   amrex::Real result = 0;
   // Log of normalized pressure in cgs units dynes/cm^2 by Patm
   amrex::Real logPratio = log(*P / 1013250.0);
@@ -1757,7 +3556,7 @@ CKSBML(
   speciesEntropy(sor, tc);
 
   // Compute Eq 42
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     result += x[id] * (sor[id] - log((x[id] + 1e-100)) - logPratio);
   }
 
@@ -1781,32 +3580,11 @@ CKSBMS(
   amrex::Real sor[21]; //  temporary storage
   amrex::Real x[21];   //  need a ytx conversion
   amrex::Real YOW = 0; // See Eq 4, 6 in CK Manual
-  amrex::Real imw[21];
-
-  get_imw(imw);
 
   // Compute inverse of mean molecular wt first
-  YOW += y[0] * imw[0];   // H2
-  YOW += y[1] * imw[1];   // H
-  YOW += y[2] * imw[2];   // O
-  YOW += y[3] * imw[3];   // O2
-  YOW += y[4] * imw[4];   // OH
-  YOW += y[5] * imw[5];   // H2O
-  YOW += y[6] * imw[6];   // HO2
-  YOW += y[7] * imw[7];   // CH2
-  YOW += y[8] * imw[8];   // CH2(S)
-  YOW += y[9] * imw[9];   // CH3
-  YOW += y[10] * imw[10]; // CH4
-  YOW += y[11] * imw[11]; // CO
-  YOW += y[12] * imw[12]; // CO2
-  YOW += y[13] * imw[13]; // HCO
-  YOW += y[14] * imw[14]; // CH2O
-  YOW += y[15] * imw[15]; // CH3O
-  YOW += y[16] * imw[16]; // C2H4
-  YOW += y[17] * imw[17]; // C2H5
-  YOW += y[18] * imw[18]; // C2H6
-  YOW += y[19] * imw[19]; // N2
-  YOW += y[20] * imw[20]; // AR
+  for (int i = 0; i < 21; i++) {
+    YOW += y[i] * global_imw[i];
+  }
   // Now compute y to x conversion
   x[0] = y[0] / (2.016000 * YOW);
   x[1] = y[1] / (1.008000 * YOW);
@@ -1831,27 +3609,9 @@ CKSBMS(
   x[20] = y[20] / (39.950000 * YOW);
   speciesEntropy(sor, tc);
   // Perform computation in Eq 42 and 43
-  result += x[0] * (sor[0] - log((x[0] + 1e-100)) - logPratio);
-  result += x[1] * (sor[1] - log((x[1] + 1e-100)) - logPratio);
-  result += x[2] * (sor[2] - log((x[2] + 1e-100)) - logPratio);
-  result += x[3] * (sor[3] - log((x[3] + 1e-100)) - logPratio);
-  result += x[4] * (sor[4] - log((x[4] + 1e-100)) - logPratio);
-  result += x[5] * (sor[5] - log((x[5] + 1e-100)) - logPratio);
-  result += x[6] * (sor[6] - log((x[6] + 1e-100)) - logPratio);
-  result += x[7] * (sor[7] - log((x[7] + 1e-100)) - logPratio);
-  result += x[8] * (sor[8] - log((x[8] + 1e-100)) - logPratio);
-  result += x[9] * (sor[9] - log((x[9] + 1e-100)) - logPratio);
-  result += x[10] * (sor[10] - log((x[10] + 1e-100)) - logPratio);
-  result += x[11] * (sor[11] - log((x[11] + 1e-100)) - logPratio);
-  result += x[12] * (sor[12] - log((x[12] + 1e-100)) - logPratio);
-  result += x[13] * (sor[13] - log((x[13] + 1e-100)) - logPratio);
-  result += x[14] * (sor[14] - log((x[14] + 1e-100)) - logPratio);
-  result += x[15] * (sor[15] - log((x[15] + 1e-100)) - logPratio);
-  result += x[16] * (sor[16] - log((x[16] + 1e-100)) - logPratio);
-  result += x[17] * (sor[17] - log((x[17] + 1e-100)) - logPratio);
-  result += x[18] * (sor[18] - log((x[18] + 1e-100)) - logPratio);
-  result += x[19] * (sor[19] - log((x[19] + 1e-100)) - logPratio);
-  result += x[20] * (sor[20] - log((x[20] + 1e-100)) - logPratio);
+  for (int i = 0; i < 21; i++) {
+    result += x[i] * (sor[i] - log((x[i] + 1e-100)) - logPratio);
+  }
   // Scale by R/W
   *sbms = result * 8.31446261815324e+07 * YOW;
 }
@@ -1872,7 +3632,6 @@ GET_T_GIVEN_EY(
   amrex::Real tmin = 90;   // max lower bound for thermo def
   amrex::Real tmax = 4000; // min upper bound for thermo def
   amrex::Real e1, emin, emax, cv, t1, dt;
-  int i; //  loop counter
   CKUBMS(&tmin, y, &emin);
   CKUBMS(&tmax, y, &emax);
   if (ein < emin) {
@@ -1893,7 +3652,7 @@ GET_T_GIVEN_EY(
   if (t1 < tmin || t1 > tmax) {
     t1 = tmin + (tmax - tmin) / (emax - emin) * (ein - emin);
   }
-  for (i = 0; i < maxiter; ++i) {
+  for (int i = 0; i < maxiter; ++i) {
     CKUBMS(&t1, y, &e1);
     CKCVBS(&t1, y, &cv);
     dt = (ein - e1) / cv;
@@ -1926,7 +3685,6 @@ GET_T_GIVEN_HY(
   amrex::Real tmin = 90;   // max lower bound for thermo def
   amrex::Real tmax = 4000; // min upper bound for thermo def
   amrex::Real h1, hmin, hmax, cp, t1, dt;
-  int i; //  loop counter
   CKHBMS(&tmin, y, &hmin);
   CKHBMS(&tmax, y, &hmax);
   if (hin < hmin) {
@@ -1947,10 +3705,14 @@ GET_T_GIVEN_HY(
   if (t1 < tmin || t1 > tmax) {
     t1 = tmin + (tmax - tmin) / (hmax - hmin) * (hin - hmin);
   }
-  for (i = 0; i < maxiter; ++i) {
+  for (int i = 0; i < maxiter; ++i) {
     CKHBMS(&t1, y, &h1);
     CKCPBS(&t1, y, &cp);
     dt = (hin - h1) / cp;
+#if 1
+    dt = max(min(dt,100.),-100.0);
+    if (fabs(dt) < tol) break;
+#else
     if (dt > 100.) {
       dt = 100.;
     } else if (dt < -100.) {
@@ -1958,10 +3720,68 @@ GET_T_GIVEN_HY(
     } else if (fabs(dt) < tol) {
       break;
     }
+#endif
     t1 += dt;
   }
   *t = t1;
   *ierr = 0;
+}
+
+//  get temperature given enthalpy in mass units and mass fracs
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+GET_T_GIVEN_HY_tmp(
+  const amrex::Real hin, const amrex::Real y[21], amrex::Real& t, int& ierr)
+{
+#ifdef CONVERGENCE
+  const int maxiter = 5000;
+  const amrex::Real tol = 1.e-12;
+#else
+  const int maxiter = 200;
+  const amrex::Real tol = 1.e-6;
+#endif
+  amrex::Real tmin = 90;   // max lower bound for thermo def
+  amrex::Real tmax = 4000; // min upper bound for thermo def
+  amrex::Real h1, hmin, hmax, cp, t1, dt;
+  CKHBMS_tmp(tmin, y, hmin);
+  CKHBMS_tmp(tmax, y, hmax);
+  if (hin < hmin) {
+    // Linear Extrapolation below tmin
+    CKCPBS_tmp(tmin, y, cp);
+    t = tmin - (hmin - hin) / cp;
+    ierr = 1;
+    return;
+  }
+  if (hin > hmax) {
+    // Linear Extrapolation above tmax
+    CKCPBS_tmp(tmax, y, cp);
+    t = tmax - (hmax - hin) / cp;
+    ierr = 1;
+    return;
+  }
+  t1 = t;
+  if (t1 < tmin || t1 > tmax) {
+    t1 = tmin + (tmax - tmin) / (hmax - hmin) * (hin - hmin);
+  }
+  for (int i = 0; i < maxiter; ++i) {
+    CKHBMS_tmp(t1, y, h1);
+    CKCPBS_tmp(t1, y, cp);
+    dt = (hin - h1) / cp;
+#if 1
+    dt = max(min(dt,100.),-100.0);
+    if (fabs(dt) < tol) break;
+#else
+    if (dt > 100.) {
+      dt = 100.;
+    } else if (dt < -100.) {
+      dt = -100.;
+    } else if (fabs(dt) < tol) {
+      break;
+    }
+#endif
+    t1 += dt;
+  }
+  t = t1;
+  ierr = 0;
 }
 
 // Compute P = rhoRT/W(x)
@@ -2006,31 +3826,10 @@ CKPY(
   amrex::Real* P)
 {
   amrex::Real YOW = 0; //  for computing mean MW
-  amrex::Real imw[21];
 
-  get_imw(imw);
-
-  YOW += y[0] * imw[0];                          // H2
-  YOW += y[1] * imw[1];                          // H
-  YOW += y[2] * imw[2];                          // O
-  YOW += y[3] * imw[3];                          // O2
-  YOW += y[4] * imw[4];                          // OH
-  YOW += y[5] * imw[5];                          // H2O
-  YOW += y[6] * imw[6];                          // HO2
-  YOW += y[7] * imw[7];                          // CH2
-  YOW += y[8] * imw[8];                          // CH2(S)
-  YOW += y[9] * imw[9];                          // CH3
-  YOW += y[10] * imw[10];                        // CH4
-  YOW += y[11] * imw[11];                        // CO
-  YOW += y[12] * imw[12];                        // CO2
-  YOW += y[13] * imw[13];                        // HCO
-  YOW += y[14] * imw[14];                        // CH2O
-  YOW += y[15] * imw[15];                        // CH3O
-  YOW += y[16] * imw[16];                        // C2H4
-  YOW += y[17] * imw[17];                        // C2H5
-  YOW += y[18] * imw[18];                        // C2H6
-  YOW += y[19] * imw[19];                        // N2
-  YOW += y[20] * imw[20];                        // AR
+  for (int i = 0; i < 21; i++) {
+    YOW += y[i] * global_imw[i];
+  }
   *P = *rho * 8.31446261815324e+07 * (*T) * YOW; // P = rho*R*T/W
 }
 
@@ -2042,7 +3841,6 @@ CKPC(
   const amrex::Real* c,
   amrex::Real* P)
 {
-  int id; // loop counter
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
@@ -2068,7 +3866,7 @@ CKPC(
   W += c[19] * 28.014000; // N2
   W += c[20] * 39.950000; // AR
 
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     sumC += c[id];
   }
   *P = *rho * 8.31446261815324e+07 * (*T) * sumC / W; // P = rho*R*T/W
@@ -2116,16 +3914,9 @@ CKRHOY(
   amrex::Real* rho)
 {
   amrex::Real YOW = 0;
-  amrex::Real tmp[21];
-  amrex::Real imw[21];
-
-  get_imw(imw);
 
   for (int i = 0; i < 21; i++) {
-    tmp[i] = y[i] * imw[i];
-  }
-  for (const auto& tp : tmp) {
-    YOW += tp;
+    YOW += y[i] * global_imw[i];
   }
 
   *rho = *P / (8.31446261815324e+07 * (*T) * YOW); // rho = P*W/(R*T)
@@ -2139,7 +3930,6 @@ CKRHOC(
   const amrex::Real* c,
   amrex::Real* rho)
 {
-  int id; // loop counter
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
@@ -2165,7 +3955,7 @@ CKRHOC(
   W += c[19] * 28.014000; // N2
   W += c[20] * 39.950000; // AR
 
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     sumC += c[id];
   }
   *rho = *P * W / (sumC * (*T) * 8.31446261815324e+07); // rho = PW/(R*T)
@@ -2184,16 +3974,9 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKMMWY(const amrex::Real* y, amrex::Real* wtm)
 {
   amrex::Real YOW = 0;
-  amrex::Real tmp[21];
-  amrex::Real imw[21];
-
-  get_imw(imw);
 
   for (int i = 0; i < 21; i++) {
-    tmp[i] = y[i] * imw[i];
-  }
-  for (const auto& tp : tmp) {
-    YOW += tp;
+    YOW += y[i] * global_imw[i];
   }
 
   *wtm = 1.0 / YOW;
@@ -2234,7 +4017,6 @@ CKMMWX(const amrex::Real* x, amrex::Real* wtm)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKMMWC(const amrex::Real* c, amrex::Real* wtm)
 {
-  int id; // loop counter
   // See Eq 5 in CK Manual
   amrex::Real W = 0;
   amrex::Real sumC = 0;
@@ -2260,7 +4042,7 @@ CKMMWC(const amrex::Real* c, amrex::Real* wtm)
   W += c[19] * 28.014000; // N2
   W += c[20] * 39.950000; // AR
 
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     sumC += c[id];
   }
   //  CK provides no guard against divison by zero
@@ -2305,22 +4087,15 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKYTX(const amrex::Real* y, amrex::Real* x)
 {
   amrex::Real YOW = 0;
-  amrex::Real tmp[21];
-  amrex::Real imw[21];
-
-  get_imw(imw);
 
   for (int i = 0; i < 21; i++) {
-    tmp[i] = y[i] * imw[i];
-  }
-  for (const auto& tp : tmp) {
-    YOW += tp;
+    YOW += y[i] * global_imw[i];
   }
 
   amrex::Real YOWINV = 1.0 / YOW;
 
   for (int i = 0; i < 21; i++) {
-    x[i] = y[i] * imw[i] * YOWINV;
+    x[i] = y[i] * global_imw[i] * YOWINV;
   }
 }
 
@@ -2334,13 +4109,10 @@ CKYTCP(
 {
   amrex::Real YOW = 0;
   amrex::Real PWORT;
-  amrex::Real imw[21];
-
-  get_imw(imw);
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 21; i++) {
-    c[i] = y[i] * imw[i];
+    c[i] = y[i] * global_imw[i];
   }
   for (int i = 0; i < 21; i++) {
     YOW += c[i];
@@ -2351,7 +4123,7 @@ CKYTCP(
   // Now compute conversion
 
   for (int i = 0; i < 21; i++) {
-    c[i] = PWORT * y[i] * imw[i];
+    c[i] = PWORT * y[i] * global_imw[i];
   }
 }
 
@@ -2363,12 +4135,21 @@ CKYTCR(
   const amrex::Real* y,
   amrex::Real* c)
 {
-  amrex::Real imw[21];
-
-  get_imw(imw);
-
   for (int i = 0; i < 21; i++) {
-    c[i] = (*rho) * y[i] * imw[i];
+    c[i] = (*rho) * y[i] * global_imw[i];
+  }
+}
+
+// convert y[species] (mass fracs) to c[species] (molar conc)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
+CKYTCR_tmp(
+  const amrex::Real rho,
+  amrex::Real /*T*/,
+  const amrex::Real y[21],
+  amrex::Real c[21])
+{
+  for (int i = 0; i < 21; i++) {
+    c[i] = rho * y[i];
   }
 }
 
@@ -2432,11 +4213,10 @@ CKXTCP(
   const amrex::Real* x,
   amrex::Real* c)
 {
-  int id;                                                  // loop counter
   amrex::Real PORT = (*P) / (8.31446261815324e+07 * (*T)); // P/RT
 
   // Compute conversion, see Eq 10
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     c[id] = x[id] * PORT;
   }
 }
@@ -2449,7 +4229,6 @@ CKXTCR(
   const amrex::Real* x,
   amrex::Real* c)
 {
-  int id;             // loop counter
   amrex::Real XW = 0; // See Eq 4, 11 in CK Manual
   amrex::Real ROW;
   // Compute mean molecular wt first
@@ -2477,7 +4256,7 @@ CKXTCR(
   ROW = (*rho) / XW;
 
   // Compute conversion, see Eq 11
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     c[id] = x[id] * ROW;
   }
 }
@@ -2486,17 +4265,16 @@ CKXTCR(
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCTX(const amrex::Real* c, amrex::Real* x)
 {
-  int id; // loop counter
   amrex::Real sumC = 0;
 
   // compute sum of c
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     sumC += c[id];
   }
 
   //  See Eq 13
   amrex::Real sumCinv = 1.0 / sumC;
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     x[id] = c[id] * sumCinv;
   }
 }
@@ -2558,14 +4336,13 @@ CKCTY(const amrex::Real* c, amrex::Real* y)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCVML(const amrex::Real* T, amrex::Real* cvml)
 {
-  int id;              // loop counter
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   cv_R(cvml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     cvml[id] *= 8.31446261815324e+07;
   }
 }
@@ -2575,14 +4352,13 @@ CKCVML(const amrex::Real* T, amrex::Real* cvml)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCPML(const amrex::Real* T, amrex::Real* cpml)
 {
-  int id;              // loop counter
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   cp_R(cpml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     cpml[id] *= 8.31446261815324e+07;
   }
 }
@@ -2592,7 +4368,6 @@ CKCPML(const amrex::Real* T, amrex::Real* cpml)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKUML(const amrex::Real* T, amrex::Real* uml)
 {
-  int id;              // loop counter
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
@@ -2600,7 +4375,7 @@ CKUML(const amrex::Real* T, amrex::Real* uml)
   speciesInternalEnergy(uml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     uml[id] *= RT;
   }
 }
@@ -2610,7 +4385,6 @@ CKUML(const amrex::Real* T, amrex::Real* uml)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKHML(const amrex::Real* T, amrex::Real* hml)
 {
-  int id;              // loop counter
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
@@ -2618,7 +4392,7 @@ CKHML(const amrex::Real* T, amrex::Real* hml)
   speciesEnthalpy(hml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     hml[id] *= RT;
   }
 }
@@ -2627,14 +4401,13 @@ CKHML(const amrex::Real* T, amrex::Real* hml)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKSML(const amrex::Real* T, amrex::Real* sml)
 {
-  int id;              // loop counter
   amrex::Real tT = *T; // temporary temperature
   const amrex::Real tc[5] = {
     log(tT), tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   speciesEntropy(sml, tc);
 
   // convert to chemkin units
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     sml[id] *= 8.31446261815324e+07;
   }
 }
@@ -2713,14 +4486,11 @@ CKUMS(const amrex::Real* T, amrex::Real* ums)
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  amrex::Real imw[21];
-
-  get_imw(imw);
 
   speciesInternalEnergy(ums, tc);
 
   for (int i = 0; i < 21; i++) {
-    ums[i] *= RT * imw[i];
+    ums[i] *= RT * global_imw[i];
   }
 }
 
@@ -2732,14 +4502,11 @@ CKHMS(const amrex::Real* T, amrex::Real* hms)
   const amrex::Real tc[5] = {
     0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
   amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
-  amrex::Real imw[21];
-
-  get_imw(imw);
 
   speciesEnthalpy(hms, tc);
 
   for (int i = 0; i < 21; i++) {
-    hms[i] *= RT * imw[i];
+    hms[i] *= RT * global_imw[i];
   }
 }
 
@@ -3622,6 +5389,11 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
   amrex::Real g_RT[21];
   gibbs(g_RT, tc);
 
+  amrex::Real exp_g_RT[21];
+  for (int i = 0; i < 21; ++i) {
+    exp_g_RT[i] = exp(g_RT[i]);
+  }
+
   {
     // reaction 29:  CH2 + H (+M) <=> CH3 (+M)
     const amrex::Real k_f = 25000000000 * exp((-0.8) * tc[0]);
@@ -3642,7 +5414,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[7]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] + g_RT[7] - g_RT[9])) * (refC) * (sc[9]);
+      Corr * k_f * (exp_g_RT[9]/(exp_g_RT[1]*exp_g_RT[7]))  * (refC) * (sc[9]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[7] -= qdot;
@@ -3670,7 +5442,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[9]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] + g_RT[9] - g_RT[10])) * (refC) * (sc[10]);
+      Corr * k_f * (exp_g_RT[10]/(exp_g_RT[1]*exp_g_RT[9])) * (refC) * (sc[10]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[9] -= qdot;
@@ -3698,7 +5470,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[13]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] + g_RT[13] - g_RT[14])) * (refC) * (sc[14]);
+      Corr * k_f * (exp_g_RT[14]/(exp_g_RT[1]*exp_g_RT[13])) * (refC) * (sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[13] -= qdot;
@@ -3726,7 +5498,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[14]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] + g_RT[14] - g_RT[15])) * (refC) * (sc[15]);
+      Corr * k_f * (exp_g_RT[15]/(exp_g_RT[1]*exp_g_RT[14])) * (refC) * (sc[15]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[14] -= qdot;
@@ -3754,7 +5526,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[16]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] + g_RT[16] - g_RT[17])) * (refC) * (sc[17]);
+      Corr * k_f * (exp_g_RT[17]/(exp_g_RT[1]*exp_g_RT[16])) * (refC) * (sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[16] -= qdot;
@@ -3782,7 +5554,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[17]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] + g_RT[17] - g_RT[18])) * (refC) * (sc[18]);
+      Corr * k_f * (exp_g_RT[18]/(exp_g_RT[1]*exp_g_RT[17])) * (refC) * (sc[18]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[17] -= qdot;
@@ -3809,7 +5581,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * (sc[0] * sc[11]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[0] + g_RT[11] - g_RT[14])) * (refC) * (sc[14]);
+      Corr * k_f * (exp_g_RT[14]/(exp_g_RT[0]*exp_g_RT[11])) * (refC) * (sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[11] -= qdot;
@@ -3837,7 +5609,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     Corr = F * F_troe;
     const amrex::Real qf = Corr * k_f * ((sc[9] * sc[9]));
     const amrex::Real qr =
-      Corr * k_f * exp(-(2.000000 * g_RT[9] - g_RT[18])) * (refC) * (sc[18]);
+      Corr * k_f * (exp_g_RT[18]/(exp_g_RT[9]*exp_g_RT[9])) * (refC) * (sc[18]);
     const amrex::Real qdot = qf - qr;
     wdot[9] -= 2.000000 * qdot;
     wdot[18] += qdot;
@@ -3851,7 +5623,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (-0.3) * sc[20];
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[2]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] + g_RT[2] - g_RT[4])) * (refC) * (sc[4]);
+      Corr * k_f * (exp_g_RT[4]/(exp_g_RT[1]*exp_g_RT[2])) * (refC) * (sc[4]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[2] -= qdot;
@@ -3866,7 +5638,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (2) * sc[18] + (-0.5) * sc[20];
     const amrex::Real qf = Corr * k_f * (sc[2] * sc[11]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[2] + g_RT[11] - g_RT[12])) * (refC) * (sc[12]);
+      Corr * k_f * (exp_g_RT[12]/(exp_g_RT[2]*exp_g_RT[11])) * (refC) * (sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[11] -= qdot;
@@ -3881,7 +5653,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (0.5) * sc[18] + (-1) * sc[19] + (-1) * sc[20];
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[3]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] + g_RT[3] - g_RT[6])) * (refC) * (sc[6]);
+      Corr * k_f * (exp_g_RT[6]/(exp_g_RT[1]*exp_g_RT[3])) * (refC) * (sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[3] -= qdot;
@@ -3893,7 +5665,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 300000000 * exp((-1.72) * tc[0]);
     const amrex::Real qf = k_f * (sc[1] * (sc[3] * sc[3]));
     const amrex::Real qr =
-      k_f * exp(-(g_RT[1] + g_RT[3] - g_RT[6])) * (refC) * (sc[3] * sc[6]);
+      k_f * (exp_g_RT[6]/(exp_g_RT[1]*exp_g_RT[3])) * (refC) * (sc[3] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[3] -= qdot;
@@ -3905,7 +5677,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 9380000 * exp((-0.76) * tc[0]);
     const amrex::Real qf = k_f * (sc[1] * sc[3] * sc[5]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[1] + g_RT[3] - g_RT[6])) * (refC) * (sc[5] * sc[6]);
+      k_f * (exp_g_RT[6]/(exp_g_RT[1]*exp_g_RT[3])) * (refC) * (sc[5] * sc[6]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[3] -= qdot;
@@ -3917,7 +5689,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 375000000 * exp((-1.72) * tc[0]);
     const amrex::Real qf = k_f * (sc[1] * sc[3] * sc[19]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[1] + g_RT[3] - g_RT[6])) * (refC) * (sc[6] * sc[19]);
+      k_f * (exp_g_RT[6]/(exp_g_RT[1]*exp_g_RT[3])) * (refC) * (sc[6] * sc[19]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[3] -= qdot;
@@ -3929,7 +5701,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 700000 * exp((-0.8) * tc[0]);
     const amrex::Real qf = k_f * (sc[1] * sc[3] * sc[20]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[1] + g_RT[3] - g_RT[6])) * (refC) * (sc[6] * sc[20]);
+      k_f * (exp_g_RT[6]/(exp_g_RT[1]*exp_g_RT[3])) * (refC) * (sc[6] * sc[20]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[3] -= qdot;
@@ -3943,7 +5715,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              (-1) * sc[12] + (2) * sc[18] + (-0.37) * sc[20];
     const amrex::Real qf = Corr * k_f * ((sc[1] * sc[1]));
     const amrex::Real qr =
-      Corr * k_f * exp(-(-g_RT[0] + 2.000000 * g_RT[1])) * (refC) * (sc[0]);
+      Corr * k_f * (exp_g_RT[0]/(exp_g_RT[1]*exp_g_RT[1])) * (refC) * (sc[0]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= 2.000000 * qdot;
@@ -3954,7 +5726,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 90000 * exp((-0.6) * tc[0]);
     const amrex::Real qf = k_f * (sc[0] * (sc[1] * sc[1]));
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + 2.000000 * g_RT[1])) * (refC) * ((sc[0] * sc[0]));
+      k_f * (exp_g_RT[0]/(exp_g_RT[1]*exp_g_RT[1])) * (refC) * ((sc[0] * sc[0]));
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= 2.000000 * qdot;
@@ -3965,7 +5737,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 60000000 * exp((-1.25) * tc[0]);
     const amrex::Real qf = k_f * ((sc[1] * sc[1]) * sc[5]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + 2.000000 * g_RT[1])) * (refC) * (sc[0] * sc[5]);
+      k_f * (exp_g_RT[0]/(exp_g_RT[1]*exp_g_RT[1])) * (refC) * (sc[0] * sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= 2.000000 * qdot;
@@ -3976,7 +5748,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 550000000 * exp((-2) * tc[0]);
     const amrex::Real qf = k_f * ((sc[1] * sc[1]) * sc[12]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + 2.000000 * g_RT[1])) * (refC) * (sc[0] * sc[12]);
+      k_f * (exp_g_RT[0]/(exp_g_RT[1]*exp_g_RT[1])) * (refC) * (sc[0] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= 2.000000 * qdot;
@@ -3989,7 +5761,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
                              sc[10] + (2) * sc[18] + (-0.62) * sc[20];
     const amrex::Real qf = Corr * k_f * (sc[1] * sc[4]);
     const amrex::Real qr =
-      Corr * k_f * exp(-(g_RT[1] + g_RT[4] - g_RT[5])) * (refC) * (sc[5]);
+      Corr * k_f * (exp_g_RT[5]/(exp_g_RT[1]*exp_g_RT[4])) * (refC) * (sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[4] -= qdot;
@@ -4001,7 +5773,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f =
       2244000000000 * exp((-1) * tc[0] - (8554.68331868023) * invT);
     const amrex::Real qf = k_f * (sc[5] * sc[13]);
-    const amrex::Real qr = k_f * exp(-(-g_RT[1] - g_RT[11] + g_RT[13])) *
+    const amrex::Real qr = k_f * ((exp_g_RT[1]*exp_g_RT[11])/exp_g_RT[13]) *
                            (refCinv) * (sc[1] * sc[5] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
@@ -4016,7 +5788,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real Corr = mixture + sc[0] + (-1) * sc[5] + sc[10] +
                              (0.5) * sc[11] + sc[12] + (2) * sc[18];
     const amrex::Real qf = Corr * k_f * (sc[13]);
-    const amrex::Real qr = Corr * k_f * exp(-(-g_RT[1] - g_RT[11] + g_RT[13])) *
+    const amrex::Real qr = Corr * k_f * ((exp_g_RT[1]*exp_g_RT[11])/exp_g_RT[13]) *
                            (refCinv) * (sc[1] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
@@ -4030,7 +5802,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.05 * exp((2.67) * tc[0] - (3165.23282791169) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[2]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[2] - g_RT[4])) * (sc[1] * sc[4]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[4])/(exp_g_RT[0]*exp_g_RT[2])) * (sc[1] * sc[4]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -4043,7 +5815,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[2] * sc[6]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[2] - g_RT[3] - g_RT[4] + g_RT[6])) * (sc[3] * sc[4]);
+      k_f * ((exp_g_RT[3]*exp_g_RT[4])/(exp_g_RT[2]*exp_g_RT[6])) * (sc[3] * sc[4]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[3] += qdot;
@@ -4056,7 +5828,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 80000000;
     const amrex::Real qf = k_f * (sc[2] * sc[7]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT[7] - g_RT[13])) * (sc[1] * sc[13]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[13])/(exp_g_RT[7]*exp_g_RT[2])) * (sc[1] * sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -4069,7 +5841,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 15000000;
     const amrex::Real qf = k_f * (sc[2] * sc[8]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT[8] - g_RT[13])) * (sc[1] * sc[13]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[13])/(exp_g_RT[8]*exp_g_RT[2])) * (sc[1] * sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -4082,7 +5854,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 84300000;
     const amrex::Real qf = k_f * (sc[2] * sc[9]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[2] + g_RT[9] - g_RT[14])) * (sc[1] * sc[14]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[14])/(exp_g_RT[9]*exp_g_RT[2])) * (sc[1] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -4096,7 +5868,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       1020 * exp((1.5) * tc[0] - (4327.66332592059) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[10]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[9] + g_RT[10])) * (sc[4] * sc[9]);
+      k_f * ((exp_g_RT[4]*exp_g_RT[9])/(exp_g_RT[10]*exp_g_RT[2])) * (sc[4] * sc[9]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -4109,7 +5881,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[2] * sc[13]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[11] + g_RT[13])) * (sc[4] * sc[11]);
+      k_f * ((exp_g_RT[4]*exp_g_RT[11])/(exp_g_RT[13]*exp_g_RT[2])) * (sc[4] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -4122,7 +5894,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[2] * sc[13]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[2] - g_RT[12] + g_RT[13])) * (sc[1] * sc[12]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[12])/(exp_g_RT[13]*exp_g_RT[2])) * (sc[1] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[2] -= qdot;
@@ -4135,7 +5907,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 39000000 * exp(-(1781.38699694871) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[14]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[13] + g_RT[14])) * (sc[4] * sc[13]);
+      k_f * ((exp_g_RT[4]*exp_g_RT[13])/(exp_g_RT[14]*exp_g_RT[2])) * (sc[4] * sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -4149,7 +5921,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       19.2 * exp((1.83) * tc[0] - (110.707666477038) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[16]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[2] - g_RT[9] - g_RT[13] + g_RT[16])) * (sc[9] * sc[13]);
+      k_f * ((exp_g_RT[9]*exp_g_RT[13])/(exp_g_RT[16]*exp_g_RT[2])) * (sc[9] * sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[9] += qdot;
@@ -4162,7 +5934,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 132000000;
     const amrex::Real qf = k_f * (sc[2] * sc[17]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[2] - g_RT[9] - g_RT[14] + g_RT[17])) * (sc[9] * sc[14]);
+      k_f * ((exp_g_RT[9]*exp_g_RT[14])/(exp_g_RT[17]*exp_g_RT[2])) * (sc[9] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[9] += qdot;
@@ -4176,7 +5948,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       89.8 * exp((1.92) * tc[0] - (2863.30282842885) * invT);
     const amrex::Real qf = k_f * (sc[2] * sc[18]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[2] - g_RT[4] - g_RT[17] + g_RT[18])) * (sc[4] * sc[17]);
+      k_f * ((exp_g_RT[4]*exp_g_RT[17])/(exp_g_RT[18]*exp_g_RT[2])) * (sc[4] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[2] -= qdot;
     wdot[4] += qdot;
@@ -4189,7 +5961,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2500000 * exp(-(24053.7566254656) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[11]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[2] + g_RT[3] + g_RT[11] - g_RT[12])) * (sc[2] * sc[12]);
+      k_f * ((exp_g_RT[12]*exp_g_RT[2])/(exp_g_RT[3]*exp_g_RT[11])) * (sc[2] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -4202,7 +5974,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 100000000 * exp(-(20128.6666321888) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[14]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[13] + g_RT[14])) * (sc[6] * sc[13]);
+      k_f * ((exp_g_RT[6]*exp_g_RT[13])/(exp_g_RT[14]*exp_g_RT[3])) * (sc[6] * sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -4215,7 +5987,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 83000000 * exp(-(7252.86180424342) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[3]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[1] - g_RT[2] + g_RT[3] - g_RT[4])) * (sc[2] * sc[4]);
+      k_f * ((exp_g_RT[2]*exp_g_RT[4])/(exp_g_RT[1]*exp_g_RT[3])) * (sc[2] * sc[4]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[2] += qdot;
@@ -4228,7 +6000,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 28000000 * exp(-(537.435399079441) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[6]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[3] + g_RT[6])) * (sc[0] * sc[3]);
+      k_f * ((exp_g_RT[0]*exp_g_RT[3])/(exp_g_RT[1]*exp_g_RT[6]))  * (sc[0] * sc[3]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -4241,7 +6013,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 134000000 * exp(-(319.542582785997) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[6]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[1] - 2.000000 * g_RT[4] + g_RT[6])) * ((sc[4] * sc[4]));
+      k_f * ((exp_g_RT[4]*exp_g_RT[4])/(exp_g_RT[1]*exp_g_RT[6]))  * ((sc[4] * sc[4]));
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[4] += 2.000000 * qdot;
@@ -4254,7 +6026,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       660 * exp((1.62) * tc[0] - (5454.86865732316) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[10]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[9] + g_RT[10])) * (sc[0] * sc[9]);
+      k_f * ((exp_g_RT[0]*exp_g_RT[9])/(exp_g_RT[1]*exp_g_RT[10]))  * (sc[0] * sc[9]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -4267,7 +6039,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 73400000;
     const amrex::Real qf = k_f * (sc[1] * sc[13]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[11] + g_RT[13])) * (sc[0] * sc[11]);
+      k_f * ((exp_g_RT[0]*exp_g_RT[11])/(exp_g_RT[1]*exp_g_RT[13])) * (sc[0] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -4281,7 +6053,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       23000 * exp((1.05) * tc[0] - (1648.03458051046) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[14]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[13] + g_RT[14])) * (sc[0] * sc[13]);
+      k_f * ((exp_g_RT[0]*exp_g_RT[13])/(exp_g_RT[1]*exp_g_RT[14])) * (sc[0] * sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -4294,7 +6066,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 32000000;
     const amrex::Real qf = k_f * (sc[1] * sc[15]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[1] - g_RT[4] - g_RT[9] + g_RT[15])) * (sc[4] * sc[9]);
+      k_f * ((exp_g_RT[4]*exp_g_RT[9])/(exp_g_RT[1]*exp_g_RT[15])) * (sc[4] * sc[9]);
     const amrex::Real qdot = qf - qr;
     wdot[1] -= qdot;
     wdot[4] += qdot;
@@ -4308,7 +6080,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       115 * exp((1.9) * tc[0] - (3789.22149350954) * invT);
     const amrex::Real qf = k_f * (sc[1] * sc[18]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[0] + g_RT[1] - g_RT[17] + g_RT[18])) * (sc[0] * sc[17]);
+      k_f * ((exp_g_RT[0]*exp_g_RT[17])/(exp_g_RT[1]*exp_g_RT[18]))  * (sc[0] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[0] += qdot;
     wdot[1] -= qdot;
@@ -4322,7 +6094,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       216 * exp((1.51) * tc[0] - (1726.03316371019) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[4]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[4] - g_RT[5])) * (sc[1] * sc[5]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[5])/(exp_g_RT[0]*exp_g_RT[4]))  * (sc[1] * sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -4336,7 +6108,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.0357 * exp((2.4) * tc[0] - (-1061.78716484796) * invT);
     const amrex::Real qf = k_f * ((sc[4] * sc[4]));
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[2] + 2.000000 * g_RT[4] - g_RT[5])) * (sc[2] * sc[5]);
+      k_f * ((exp_g_RT[2]*exp_g_RT[5])/(exp_g_RT[4]*exp_g_RT[4]))  * (sc[2] * sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[4] -= 2.000000 * qdot;
@@ -4348,7 +6120,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 29000000 * exp(-(-251.60833290236) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[6]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[3] + g_RT[4] - g_RT[5] + g_RT[6])) * (sc[3] * sc[5]);
+      k_f * ((exp_g_RT[3]*exp_g_RT[5])/(exp_g_RT[4]*exp_g_RT[6]))  * (sc[3] * sc[5]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[4] -= qdot;
@@ -4361,7 +6133,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[4] * sc[7]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[4] + g_RT[7] - g_RT[14])) * (sc[1] * sc[14]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[14])/(exp_g_RT[7]*exp_g_RT[4]))  * (sc[1] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -4374,7 +6146,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[4] * sc[8]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[4] + g_RT[8] - g_RT[14])) * (sc[1] * sc[14]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[14])/(exp_g_RT[8]*exp_g_RT[4]))  * (sc[1] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -4387,7 +6159,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 56 * exp((1.6) * tc[0] - (2727.43432866158) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[9]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[7] + g_RT[9])) * (sc[5] * sc[7]);
+      k_f * ((exp_g_RT[7]*exp_g_RT[5])/(exp_g_RT[9]*exp_g_RT[4]))  * (sc[5] * sc[7]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -4400,7 +6172,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 25010000;
     const amrex::Real qf = k_f * (sc[4] * sc[9]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[8] + g_RT[9])) * (sc[5] * sc[8]);
+      k_f * ((exp_g_RT[5]*exp_g_RT[8])/(exp_g_RT[4]*exp_g_RT[9])) * (sc[5] * sc[8]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -4414,7 +6186,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       100 * exp((1.6) * tc[0] - (1570.03599731073) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[10]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[9] + g_RT[10])) * (sc[5] * sc[9]);
+      k_f * ((exp_g_RT[5]*exp_g_RT[9])/(exp_g_RT[4]*exp_g_RT[10])) * (sc[5] * sc[9]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -4428,7 +6200,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       47.6 * exp((1.228) * tc[0] - (35.2251666063304) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[11]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[4] + g_RT[11] - g_RT[12])) * (sc[1] * sc[12]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[12])/(exp_g_RT[4]*exp_g_RT[11])) * (sc[1] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[4] -= qdot;
@@ -4441,7 +6213,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 50000000;
     const amrex::Real qf = k_f * (sc[4] * sc[13]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[11] + g_RT[13])) * (sc[5] * sc[11]);
+      k_f * ((exp_g_RT[5]*exp_g_RT[11])/(exp_g_RT[4]*exp_g_RT[13])) * (sc[5] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -4455,7 +6227,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3430 * exp((1.18) * tc[0] - (-224.93784961471) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[14]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[13] + g_RT[14])) * (sc[5] * sc[13]);
+      k_f * ((exp_g_RT[5]*exp_g_RT[13])/(exp_g_RT[4]*exp_g_RT[14])) * (sc[5] * sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -4469,7 +6241,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       3.54 * exp((2.12) * tc[0] - (437.798499250106) * invT);
     const amrex::Real qf = k_f * (sc[4] * sc[18]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[4] - g_RT[5] - g_RT[17] + g_RT[18])) * (sc[5] * sc[17]);
+      k_f * ((exp_g_RT[5]*exp_g_RT[17])/(exp_g_RT[4]*exp_g_RT[18])) * (sc[5] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[4] -= qdot;
     wdot[5] += qdot;
@@ -4482,7 +6254,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[6] * sc[7]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[4] + g_RT[6] + g_RT[7] - g_RT[14])) * (sc[4] * sc[14]);
+      k_f * ((exp_g_RT[4]*exp_g_RT[14])/(exp_g_RT[6]*exp_g_RT[7])) * (sc[4] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[6] -= qdot;
@@ -4495,7 +6267,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 1000000;
     const amrex::Real qf = k_f * (sc[6] * sc[9]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[3] + g_RT[6] + g_RT[9] - g_RT[10])) * (sc[3] * sc[10]);
+      k_f * ((exp_g_RT[3]*exp_g_RT[10])/(exp_g_RT[6]*exp_g_RT[9])) * (sc[3] * sc[10]);
     const amrex::Real qdot = qf - qr;
     wdot[3] += qdot;
     wdot[6] -= qdot;
@@ -4508,7 +6280,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 20000000;
     const amrex::Real qf = k_f * (sc[6] * sc[9]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[4] + g_RT[6] + g_RT[9] - g_RT[15])) * (sc[4] * sc[15]);
+      k_f * ((exp_g_RT[4]*exp_g_RT[15])/(exp_g_RT[6]*exp_g_RT[9])) * (sc[4] * sc[15]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[6] -= qdot;
@@ -4521,7 +6293,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 150000000 * exp(-(11875.9133129914) * invT);
     const amrex::Real qf = k_f * (sc[6] * sc[11]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[4] + g_RT[6] + g_RT[11] - g_RT[12])) * (sc[4] * sc[12]);
+      k_f * ((exp_g_RT[4]*exp_g_RT[12])/(exp_g_RT[6]*exp_g_RT[11])) * (sc[4] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[4] += qdot;
     wdot[6] -= qdot;
@@ -4534,7 +6306,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 13200000 * exp(-(754.82499870708) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[7]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[3] - g_RT[4] + g_RT[7] - g_RT[13])) * (sc[4] * sc[13]);
+      k_f * ((exp_g_RT[4]*exp_g_RT[13])/(exp_g_RT[3]*exp_g_RT[7])) * (sc[4] * sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[4] += qdot;
@@ -4547,7 +6319,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 0.5 * exp((2) * tc[0] - (3638.25649376812) * invT);
     const amrex::Real qf = k_f * (sc[0] * sc[7]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[7] - g_RT[9])) * (sc[1] * sc[9]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[9])/(exp_g_RT[0]*exp_g_RT[7])) * (sc[1] * sc[9]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -4560,7 +6332,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 40000000;
     const amrex::Real qf = k_f * (sc[7] * sc[9]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[7] + g_RT[9] - g_RT[16])) * (sc[1] * sc[16]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[16])/(exp_g_RT[9]*exp_g_RT[7])) * (sc[1] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[7] -= qdot;
@@ -4573,7 +6345,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 2.46 * exp((2) * tc[0] - (4161.60182620503) * invT);
     const amrex::Real qf = k_f * (sc[7] * sc[10]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[7] - 2.000000 * g_RT[9] + g_RT[10])) * ((sc[9] * sc[9]));
+      k_f * ((exp_g_RT[9]*exp_g_RT[9])/(exp_g_RT[10]*exp_g_RT[7])) * ((sc[9] * sc[9]));
     const amrex::Real qdot = qf - qr;
     wdot[7] -= qdot;
     wdot[9] += 2.000000 * qdot;
@@ -4585,7 +6357,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 15000000 * exp(-(301.929999482832) * invT);
     const amrex::Real qf = k_f * (sc[8] * sc[19]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[19] - g_RT[19])) * (sc[7] * sc[19]);
+      k_f * ((exp_g_RT[7])/(exp_g_RT[8])) * (sc[7] * sc[19]);
     const amrex::Real qdot = qf - qr;
     wdot[7] += qdot;
     wdot[8] -= qdot;
@@ -4598,7 +6370,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 9000000 * exp(-(301.929999482832) * invT);
     const amrex::Real qf = k_f * (sc[8] * sc[20]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[20] - g_RT[20])) * (sc[7] * sc[20]);
+      k_f * ((exp_g_RT[7])/(exp_g_RT[8])) * (sc[7] * sc[20]);
     const amrex::Real qdot = qf - qr;
     wdot[7] += qdot;
     wdot[8] -= qdot;
@@ -4611,7 +6383,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 28000000;
     const amrex::Real qf = k_f * (sc[3] * sc[8]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[3] - g_RT[4] + g_RT[8] - g_RT[11])) *
+      k_f * ((exp_g_RT[1]*exp_g_RT[4]*exp_g_RT[11])/(exp_g_RT[3]*exp_g_RT[8])) *
       (refCinv) * (sc[1] * sc[4] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
@@ -4626,7 +6398,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 12000000;
     const amrex::Real qf = k_f * (sc[3] * sc[8]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[3] - g_RT[5] + g_RT[8] - g_RT[11])) * (sc[5] * sc[11]);
+      k_f * ((exp_g_RT[5]*exp_g_RT[11])/(exp_g_RT[3]*exp_g_RT[8])) * (sc[5] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[5] += qdot;
@@ -4639,7 +6411,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 70000000;
     const amrex::Real qf = k_f * (sc[0] * sc[8]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[0] - g_RT[1] + g_RT[8] - g_RT[9])) * (sc[1] * sc[9]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[9])/(exp_g_RT[0]*exp_g_RT[8])) * (sc[1] * sc[9]);
     const amrex::Real qdot = qf - qr;
     wdot[0] -= qdot;
     wdot[1] += qdot;
@@ -4652,7 +6424,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 30000000;
     const amrex::Real qf = k_f * (sc[5] * sc[8]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[5] - g_RT[5] - g_RT[7] + g_RT[8])) * (sc[5] * sc[7]);
+      k_f * ((exp_g_RT[7])/(exp_g_RT[8])) * (sc[5] * sc[7]);
     const amrex::Real qdot = qf - qr;
     wdot[5] -= qdot;
     wdot[5] += qdot;
@@ -4665,7 +6437,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 12000000 * exp(-(-286.83349950869) * invT);
     const amrex::Real qf = k_f * (sc[8] * sc[9]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + g_RT[8] + g_RT[9] - g_RT[16])) * (sc[1] * sc[16]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[16])/(exp_g_RT[9]*exp_g_RT[8])) * (sc[1] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[8] -= qdot;
@@ -4678,7 +6450,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 16000000 * exp(-(-286.83349950869) * invT);
     const amrex::Real qf = k_f * (sc[8] * sc[10]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[8] - 2.000000 * g_RT[9] + g_RT[10])) * ((sc[9] * sc[9]));
+      k_f * ((exp_g_RT[9]*exp_g_RT[9])/(exp_g_RT[10]*exp_g_RT[8])) * ((sc[9] * sc[9]));
     const amrex::Real qdot = qf - qr;
     wdot[8] -= qdot;
     wdot[9] += 2.000000 * qdot;
@@ -4690,7 +6462,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 9000000;
     const amrex::Real qf = k_f * (sc[8] * sc[11]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[11] - g_RT[11])) * (sc[7] * sc[11]);
+      k_f * ((exp_g_RT[7])/(exp_g_RT[8])) * (sc[7] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[7] += qdot;
     wdot[8] -= qdot;
@@ -4703,7 +6475,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 7000000;
     const amrex::Real qf = k_f * (sc[8] * sc[12]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[7] + g_RT[8] + g_RT[12] - g_RT[12])) * (sc[7] * sc[12]);
+      k_f * ((exp_g_RT[7])/(exp_g_RT[8])) * (sc[7] * sc[12]);
     const amrex::Real qdot = qf - qr;
     wdot[7] += qdot;
     wdot[8] -= qdot;
@@ -4716,7 +6488,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 14000000;
     const amrex::Real qf = k_f * (sc[8] * sc[12]);
     const amrex::Real qr = k_f *
-                           exp(-(g_RT[8] - g_RT[11] + g_RT[12] - g_RT[14])) *
+                           ((exp_g_RT[11]*exp_g_RT[14])/(exp_g_RT[8]*exp_g_RT[12])) *
                            (sc[11] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[8] -= qdot;
@@ -4730,7 +6502,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 26750000 * exp(-(14492.6399751759) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[9]);
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[2] + g_RT[3] + g_RT[9] - g_RT[15])) * (sc[2] * sc[15]);
+      k_f * ((exp_g_RT[2]*exp_g_RT[15])/(exp_g_RT[3]*exp_g_RT[9])) * (sc[2] * sc[15]);
     const amrex::Real qdot = qf - qr;
     wdot[2] += qdot;
     wdot[3] -= qdot;
@@ -4743,7 +6515,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 36000 * exp(-(4498.75699229419) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[9]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[3] - g_RT[4] + g_RT[9] - g_RT[14])) * (sc[4] * sc[14]);
+      k_f * ((exp_g_RT[4]*exp_g_RT[14])/(exp_g_RT[3]*exp_g_RT[9])) * (sc[4] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[4] += qdot;
@@ -4757,7 +6529,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       4990000 * exp((0.1) * tc[0] - (5334.09665753003) * invT);
     const amrex::Real qf = k_f * ((sc[9] * sc[9]));
     const amrex::Real qr =
-      k_f * exp(-(-g_RT[1] + 2.000000 * g_RT[9] - g_RT[17])) * (sc[1] * sc[17]);
+      k_f * ((exp_g_RT[1]*exp_g_RT[17])/(exp_g_RT[9]*exp_g_RT[9])) * (sc[1] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[1] += qdot;
     wdot[9] -= 2.000000 * qdot;
@@ -4769,7 +6541,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 26480000;
     const amrex::Real qf = k_f * (sc[9] * sc[13]);
     const amrex::Real qr = k_f *
-                           exp(-(g_RT[9] - g_RT[10] - g_RT[11] + g_RT[13])) *
+                           ((exp_g_RT[10]*exp_g_RT[11])/(exp_g_RT[9]*exp_g_RT[13])) *
                            (sc[10] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[9] -= qdot;
@@ -4784,7 +6556,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       0.00332 * exp((2.81) * tc[0] - (2948.84966161566) * invT);
     const amrex::Real qf = k_f * (sc[9] * sc[14]);
     const amrex::Real qr = k_f *
-                           exp(-(g_RT[9] - g_RT[10] - g_RT[13] + g_RT[14])) *
+                           ((exp_g_RT[10]*exp_g_RT[13])/(exp_g_RT[9]*exp_g_RT[14])) *
                            (sc[10] * sc[13]);
     const amrex::Real qdot = qf - qr;
     wdot[9] -= qdot;
@@ -4799,7 +6571,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       6.14 * exp((1.74) * tc[0] - (5258.61415765932) * invT);
     const amrex::Real qf = k_f * (sc[9] * sc[18]);
     const amrex::Real qr = k_f *
-                           exp(-(g_RT[9] - g_RT[10] - g_RT[17] + g_RT[18])) *
+                           ((exp_g_RT[10]*exp_g_RT[17])/(exp_g_RT[9]*exp_g_RT[18])) *
                            (sc[10] * sc[17]);
     const amrex::Real qdot = qf - qr;
     wdot[9] -= qdot;
@@ -4813,7 +6585,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 7600000 * exp(-(201.286666321888) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[13]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[11] + g_RT[13])) * (sc[6] * sc[11]);
+      k_f * ((exp_g_RT[6]*exp_g_RT[11])/(exp_g_RT[3]*exp_g_RT[13])) * (sc[6] * sc[11]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -4827,7 +6599,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
       4.28e-19 * exp((7.6) * tc[0] - (-1776.35483029066) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[15]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[14] + g_RT[15])) * (sc[6] * sc[14]);
+      k_f * ((exp_g_RT[6]*exp_g_RT[14])/(exp_g_RT[3]*exp_g_RT[15])) * (sc[6] * sc[14]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -4840,7 +6612,7 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
     const amrex::Real k_f = 840000 * exp(-(1949.96457999329) * invT);
     const amrex::Real qf = k_f * (sc[3] * sc[17]);
     const amrex::Real qr =
-      k_f * exp(-(g_RT[3] - g_RT[6] - g_RT[16] + g_RT[17])) * (sc[6] * sc[16]);
+      k_f * ((exp_g_RT[6]*exp_g_RT[16])/(exp_g_RT[3]*exp_g_RT[17])) * (sc[6] * sc[16]);
     const amrex::Real qdot = qf - qr;
     wdot[3] -= qdot;
     wdot[6] += qdot;
@@ -4879,68 +6651,28 @@ CKWYP(
   const amrex::Real* y,
   amrex::Real* wdot)
 {
-  int id;            // loop counter
   amrex::Real c[21]; // temporary storage
   amrex::Real YOW = 0;
   amrex::Real PWORT;
-  amrex::Real imw[21];
-
-  get_imw(imw);
 
   // Compute inverse of mean molecular wt first
-  YOW += y[0] * imw[0];   // H2
-  YOW += y[1] * imw[1];   // H
-  YOW += y[2] * imw[2];   // O
-  YOW += y[3] * imw[3];   // O2
-  YOW += y[4] * imw[4];   // OH
-  YOW += y[5] * imw[5];   // H2O
-  YOW += y[6] * imw[6];   // HO2
-  YOW += y[7] * imw[7];   // CH2
-  YOW += y[8] * imw[8];   // CH2(S)
-  YOW += y[9] * imw[9];   // CH3
-  YOW += y[10] * imw[10]; // CH4
-  YOW += y[11] * imw[11]; // CO
-  YOW += y[12] * imw[12]; // CO2
-  YOW += y[13] * imw[13]; // HCO
-  YOW += y[14] * imw[14]; // CH2O
-  YOW += y[15] * imw[15]; // CH3O
-  YOW += y[16] * imw[16]; // C2H4
-  YOW += y[17] * imw[17]; // C2H5
-  YOW += y[18] * imw[18]; // C2H6
-  YOW += y[19] * imw[19]; // N2
-  YOW += y[20] * imw[20]; // AR
+  for (int i = 0; i < 21; i++) {
+    YOW += y[i] * global_imw[i];
+  }
   // PW/RT (see Eq. 7)
   PWORT = (*P) / (YOW * 8.31446261815324e+07 * (*T));
   // multiply by 1e6 so c goes to SI
   PWORT *= 1e6;
   // Now compute conversion (and go to SI)
-  c[0] = PWORT * y[0] * imw[0];
-  c[1] = PWORT * y[1] * imw[1];
-  c[2] = PWORT * y[2] * imw[2];
-  c[3] = PWORT * y[3] * imw[3];
-  c[4] = PWORT * y[4] * imw[4];
-  c[5] = PWORT * y[5] * imw[5];
-  c[6] = PWORT * y[6] * imw[6];
-  c[7] = PWORT * y[7] * imw[7];
-  c[8] = PWORT * y[8] * imw[8];
-  c[9] = PWORT * y[9] * imw[9];
-  c[10] = PWORT * y[10] * imw[10];
-  c[11] = PWORT * y[11] * imw[11];
-  c[12] = PWORT * y[12] * imw[12];
-  c[13] = PWORT * y[13] * imw[13];
-  c[14] = PWORT * y[14] * imw[14];
-  c[15] = PWORT * y[15] * imw[15];
-  c[16] = PWORT * y[16] * imw[16];
-  c[17] = PWORT * y[17] * imw[17];
-  c[18] = PWORT * y[18] * imw[18];
-  c[19] = PWORT * y[19] * imw[19];
-  c[20] = PWORT * y[20] * imw[20];
+  for (int i = 0; i < 21; i++) {
+    c[i] = PWORT * y[i] * global_imw[i];
+  }
 
   // convert to chemkin units
   productionRate(wdot, c, *T);
 
   // convert to chemkin units
-  for (id = 0; id < 21; ++id) {
+  for (int id = 0; id < 21; ++id) {
     wdot[id] *= 1.0e-6;
   }
 }
@@ -4985,32 +6717,29 @@ CKWYR(
 {
   int id;            // loop counter
   amrex::Real c[21]; // temporary storage
-  amrex::Real imw[21];
-
-  get_imw(imw);
 
   // See Eq 8 with an extra 1e6 so c goes to SI
-  c[0] = 1e6 * (*rho) * y[0] * imw[0];
-  c[1] = 1e6 * (*rho) * y[1] * imw[1];
-  c[2] = 1e6 * (*rho) * y[2] * imw[2];
-  c[3] = 1e6 * (*rho) * y[3] * imw[3];
-  c[4] = 1e6 * (*rho) * y[4] * imw[4];
-  c[5] = 1e6 * (*rho) * y[5] * imw[5];
-  c[6] = 1e6 * (*rho) * y[6] * imw[6];
-  c[7] = 1e6 * (*rho) * y[7] * imw[7];
-  c[8] = 1e6 * (*rho) * y[8] * imw[8];
-  c[9] = 1e6 * (*rho) * y[9] * imw[9];
-  c[10] = 1e6 * (*rho) * y[10] * imw[10];
-  c[11] = 1e6 * (*rho) * y[11] * imw[11];
-  c[12] = 1e6 * (*rho) * y[12] * imw[12];
-  c[13] = 1e6 * (*rho) * y[13] * imw[13];
-  c[14] = 1e6 * (*rho) * y[14] * imw[14];
-  c[15] = 1e6 * (*rho) * y[15] * imw[15];
-  c[16] = 1e6 * (*rho) * y[16] * imw[16];
-  c[17] = 1e6 * (*rho) * y[17] * imw[17];
-  c[18] = 1e6 * (*rho) * y[18] * imw[18];
-  c[19] = 1e6 * (*rho) * y[19] * imw[19];
-  c[20] = 1e6 * (*rho) * y[20] * imw[20];
+  c[0] = 1e6 * (*rho) * y[0] * global_imw[0];
+  c[1] = 1e6 * (*rho) * y[1] * global_imw[1];
+  c[2] = 1e6 * (*rho) * y[2] * global_imw[2];
+  c[3] = 1e6 * (*rho) * y[3] * global_imw[3];
+  c[4] = 1e6 * (*rho) * y[4] * global_imw[4];
+  c[5] = 1e6 * (*rho) * y[5] * global_imw[5];
+  c[6] = 1e6 * (*rho) * y[6] * global_imw[6];
+  c[7] = 1e6 * (*rho) * y[7] * global_imw[7];
+  c[8] = 1e6 * (*rho) * y[8] * global_imw[8];
+  c[9] = 1e6 * (*rho) * y[9] * global_imw[9];
+  c[10] = 1e6 * (*rho) * y[10] * global_imw[10];
+  c[11] = 1e6 * (*rho) * y[11] * global_imw[11];
+  c[12] = 1e6 * (*rho) * y[12] * global_imw[12];
+  c[13] = 1e6 * (*rho) * y[13] * global_imw[13];
+  c[14] = 1e6 * (*rho) * y[14] * global_imw[14];
+  c[15] = 1e6 * (*rho) * y[15] * global_imw[15];
+  c[16] = 1e6 * (*rho) * y[16] * global_imw[16];
+  c[17] = 1e6 * (*rho) * y[17] * global_imw[17];
+  c[18] = 1e6 * (*rho) * y[18] * global_imw[18];
+  c[19] = 1e6 * (*rho) * y[19] * global_imw[19];
+  c[20] = 1e6 * (*rho) * y[20] * global_imw[20];
 
   // call productionRate
   productionRate(wdot, c, *T);
@@ -5104,14 +6833,11 @@ CKCHRG(int* kcharge)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void
 CKCHRGMASS(amrex::Real* zk)
 {
-  amrex::Real imw[21];
-  get_imw(imw);
-
   int kchrg[21];
   CKCHRG(kchrg);
 
   for (int id = 0; id < 21; ++id) {
-    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw[id];
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * global_imw[id];
   }
 }
 
@@ -17316,6 +19042,70 @@ GET_CRITPARAMS(
            (39.948000 * 39.948000 * 48.980000);
   bi[20] = 0.08664 * Rcst * Tci[20] / (39.948000 * 48.980000);
   acentric_i[20] = -0.002000;
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_NO_INLINE
+static void RTY2HiFusedOutputCYOrderGenerated(
+  const amrex::Real* rYs, amrex::Real* cdots_pt, amrex::Real* ydot_d,
+  amrex::Real rhoesrc, amrex::Real rho_pt_inv, amrex::Real Cv_pt,
+  amrex::Real tT, int icell, int ncells)
+{
+  const amrex::Real tc[5] = {
+	  0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
+  const amrex::Real invT = 1 / tT;
+
+  if (tT < 1000)
+  {
+    for (int n = 0; n < 21; ++n) {
+      const amrex::Real cdot_rYs = cdots_pt[n] + rYs[icell+n*ncells];
+      ydot_d[icell+n*ncells] = cdot_rYs;
+      rhoesrc -= cdot_rYs * speciesEnthalpyLow(n,invT,tc) * RT * global_imw[n];
+    }
+  }
+  else
+  {
+    for (int n = 0; n < 21; ++n) {
+      const amrex::Real cdot_rYs = cdots_pt[n] + rYs[icell+n*ncells];
+      ydot_d[icell+n*ncells] = cdot_rYs;
+      rhoesrc -= cdot_rYs * speciesEnthalpyHigh(n,invT,tc) * RT * global_imw[n];
+    }
+  }
+    
+  ydot_d[icell+21*ncells] = rhoesrc * (rho_pt_inv / Cv_pt);
+}
+
+AMREX_GPU_HOST_DEVICE
+AMREX_NO_INLINE
+static void RTY2HiFusedOutputYCOrderGenerated(
+  const amrex::Real* rYs, amrex::Real* cdots_pt, amrex::Real* ydot_d,
+  amrex::Real rhoesrc, amrex::Real rho_pt_inv, amrex::Real Cv_pt,
+  amrex::Real tT, int icell, int ncells)
+{
+  const amrex::Real tc[5] = {
+	  0, tT, tT * tT, tT * tT * tT, tT * tT * tT * tT}; // temperature cache
+  amrex::Real RT = 8.31446261815324e+07 * tT;         // R*T
+  const amrex::Real invT = 1 / tT;
+
+  if (tT < 1000)
+  {
+    for (int n = 0; n < 21; ++n) {
+      const amrex::Real cdot_rYs = cdots_pt[n] + rYs[icell*21+20];
+      ydot_d[icell*21+20] = cdot_rYs;
+      rhoesrc -= cdot_rYs * speciesEnthalpyLow(n,invT,tc) * RT * global_imw[n];
+    }
+  }
+  else
+  {
+    for (int n = 0; n < 21; ++n) {
+      const amrex::Real cdot_rYs = cdots_pt[n] + rYs[icell*21+20];
+      ydot_d[icell*21+20] = cdot_rYs;
+      rhoesrc -= cdot_rYs * speciesEnthalpyHigh(n,invT,tc) * RT * global_imw[n];
+    }
+  }
+  
+  ydot_d[icell*21+21] = rhoesrc * (rho_pt_inv / Cv_pt);
 }
 
 // gauss-jordan solver external routine

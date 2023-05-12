@@ -41,6 +41,26 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  static void TY2Cp_tmp(amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
+  {
+    CKCPBS_tmp(T, Y, Cp);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_HIP
+  AMREX_NO_INLINE
+#else
+  AMREX_FORCE_INLINE
+#endif
+  static void
+  RTY2Cp_tmp(amrex::Real /*R*/, amrex::Real T, amrex::Real Y[], amrex::Real& Cp)
+  {
+    TY2Cp_tmp(T, Y, Cp);
+  }
+
+  
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   static void TY2Cv(amrex::Real T, amrex::Real Y[], amrex::Real& Cv)
   {
     CKCVBS(&T, Y, &Cv);
@@ -133,6 +153,28 @@ struct Fuego
 
   AMREX_GPU_HOST_DEVICE
   AMREX_FORCE_INLINE
+  static void HY2T_tmp(amrex::Real H, amrex::Real Y[], amrex::Real& T)
+  {
+    // For Fuego this function is really just a wrapper for GET_T_GIVEN_HY
+    // In SRK this will be different probably
+    int lierr = 0;
+    GET_T_GIVEN_HY_tmp(H, Y, T, lierr);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_HIP
+  AMREX_NO_INLINE
+#else
+  AMREX_FORCE_INLINE
+#endif
+  static void
+  RHY2T_tmp(amrex::Real /*R*/, amrex::Real H, amrex::Real Y[], amrex::Real& T)
+  {
+    HY2T_tmp(H, Y, T);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
   static void RYET2P(
     amrex::Real R,
     amrex::Real Y[],
@@ -164,7 +206,26 @@ struct Fuego
   }
 
   AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_HIP
+  AMREX_NO_INLINE
+#else
   AMREX_FORCE_INLINE
+#endif
+  static void
+  RTY2WDOT_tmp(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
+  {
+    amrex::Real C[NUM_SPECIES];
+    CKYTCR_tmp(R, T, Y, C);
+    CKWC(&T, C, WDOT);
+
+    //amrex::Real mw[NUM_SPECIES];
+    //get_mw(mw);
+    for (int n = 0; n < NUM_SPECIES; n++) {
+      WDOT[n] *= global_mw[n];
+    }
+  }
+
+  AMREX_GPU_HOST_DEVICE
   static void
   RTY2WDOT(amrex::Real R, amrex::Real T, amrex::Real Y[], amrex::Real WDOT[])
   {
@@ -392,6 +453,28 @@ struct Fuego
     RTY2P(R, T, Y, P);
     dpde = (G - 1.0) * R;
     dpdr_e = P / R;
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_NO_INLINE
+  static void RTY2HiFusedOutputCYOrder(
+    const amrex::Real* rYs, amrex::Real* cdots_pt, amrex::Real* ydot_d,
+    amrex::Real rhoesrc, amrex::Real rho_pt_inv, amrex::Real Cv_pt,
+    amrex::Real temp_pt, int icell, int ncells)
+  {
+    RTY2HiFusedOutputCYOrderGenerated(rYs, cdots_pt, ydot_d, rhoesrc,
+				      rho_pt_inv, Cv_pt, temp_pt, icell, ncells);
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_NO_INLINE
+  static void RTY2HiFusedOutputYCOrder(
+    const amrex::Real* rYs, amrex::Real* cdots_pt, amrex::Real* ydot_d,
+    amrex::Real rhoesrc, amrex::Real rho_pt_inv, amrex::Real Cv_pt,
+    amrex::Real temp_pt, int icell, int ncells)
+  {
+    RTY2HiFusedOutputYCOrderGenerated(rYs, cdots_pt, ydot_d, rhoesrc,
+				      rho_pt_inv, Cv_pt, temp_pt, icell, ncells);
   }
 
   template <class... Args>

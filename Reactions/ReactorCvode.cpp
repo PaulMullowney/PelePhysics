@@ -1776,11 +1776,54 @@ ReactorCvode::cF_RHS(
   auto* rhoe_init = udata->rhoe_init;
   auto* rhoesrc_ext = udata->rhoesrc_ext;
   auto* rYsrc_ext = udata->rYsrc_ext;
-  amrex::ParallelFor(ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
-    utils::fKernelSpec<Ordering>(
-      icell, ncells, dt_save, reactor_type, yvec_d, ydot_d, rhoe_init,
-      rhoesrc_ext, rYsrc_ext);
-  });
+  if (reactor_type == ReactorTypes::e_reactor_type) {
+#ifdef AMREX_USE_HIP
+    auto stream = udata->stream;
+    auto nbThreads = 64;
+    auto nbBlocks = std::max(1, ncells / nbThreads);
+    const auto ec = amrex::Gpu::ExecutionConfig(ncells);
+    AMREX_ALWAYS_ASSERT(nbThreads == 64);
+    amrex::launch_global<64, 2>
+      <<<nbBlocks, 64, ec.sharedMem, stream>>>(
+        [=] AMREX_GPU_DEVICE() noexcept {
+	  for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+		 stride = blockDim.x * gridDim.x;
+	       icell < ncells; icell += stride) {
+	    utils::fKernelSpecE<Ordering>(icell, ncells, dt_save, yvec_d, ydot_d, rhoe_init,
+					  rhoesrc_ext, rYsrc_ext);
+	  }
+	});
+#else
+    amrex::ParallelFor(ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
+		 utils::fKernelSpecE<Ordering>(icell, ncells, dt_save, yvec_d, ydot_d, rhoe_init,
+												 rhoesrc_ext, rYsrc_ext);
+      });
+#endif
+  } else if (reactor_type == ReactorTypes::h_reactor_type) {
+#ifdef AMREX_USE_HIP
+    auto stream = udata->stream;
+    auto nbThreads = 64;
+    auto nbBlocks = std::max(1, ncells / nbThreads);
+    const auto ec = amrex::Gpu::ExecutionConfig(ncells);
+    AMREX_ALWAYS_ASSERT(nbThreads == 64);
+    amrex::launch_global<64, 2>
+      <<<nbBlocks, 64, ec.sharedMem, stream>>>(
+        [=] AMREX_GPU_DEVICE() noexcept {
+          for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+	       stride = blockDim.x * gridDim.x;
+	       icell < ncells; icell += stride) {
+	    utils::fKernelSpecH<Ordering>(icell, ncells, dt_save, yvec_d, ydot_d, rhoe_init,
+					  rhoesrc_ext, rYsrc_ext);
+	  }
+	});
+#else
+    amrex::ParallelFor(ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
+		 utils::fKernelSpecH<Ordering>(icell, ncells, dt_save, yvec_d, ydot_d, rhoe_init, rhoesrc_ext, rYsrc_ext);
+      });
+#endif
+  } else {
+    amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
+  }
   amrex::Gpu::Device::streamSynchronize();
   return 0;
 }
