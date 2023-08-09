@@ -47,7 +47,8 @@ check_flag(void* flagvalue, const char* funcname, int opt)
 
 #ifdef AMREX_USE_GPU
 N_Vector
-setNVectorGPU(int nvsize, int atomic_reductions, amrex::gpuStream_t stream)
+setNVectorGPU(int nvsize, GpuNVectorReduction reduction,
+              amrex::gpuStream_t stream)
 {
 #if defined(AMREX_USE_CUDA)
   N_Vector y = N_VNewWithMemHelp_Cuda(
@@ -58,11 +59,18 @@ setNVectorGPU(int nvsize, int atomic_reductions, amrex::gpuStream_t stream)
   }
   SUNCudaExecPolicy* stream_exec_policy =
     new SUNCudaThreadDirectExecPolicy(256, stream);
-  SUNCudaExecPolicy* reduce_exec_policy;
-  if (atomic_reductions) {
+  SUNCudaExecPolicy* reduce_exec_policy = nullptr;
+  switch (reduction) {
+  case GpuNVectorReduction::Atomic:
     reduce_exec_policy = new SUNCudaBlockReduceAtomicExecPolicy(256, 0, stream);
-  } else {
+    break;
+  case GpuNVectorReduction::Thrust:
+    reduce_exec_policy = new SUNCudaThrustExecPolicy(stream);
+    break;
+  case GpuNVectorReduction::LDS:
+  default:
     reduce_exec_policy = new SUNCudaBlockReduceExecPolicy(256, 0, stream);
+    break;
   }
   N_VSetKernelExecPolicy_Cuda(y, stream_exec_policy, reduce_exec_policy);
 #elif defined(AMREX_USE_HIP)
@@ -74,14 +82,22 @@ setNVectorGPU(int nvsize, int atomic_reductions, amrex::gpuStream_t stream)
   }
   SUNHipExecPolicy* stream_exec_policy =
     new SUNHipThreadDirectExecPolicy(256, stream);
-  SUNHipExecPolicy* reduce_exec_policy;
-  if (atomic_reductions) {
+  SUNHipExecPolicy* reduce_exec_policy = nullptr;
+  switch (reduction) {
+  case GpuNVectorReduction::Atomic:
     reduce_exec_policy = new SUNHipBlockReduceAtomicExecPolicy(256, 0, stream);
-  } else {
+    break;
+  case GpuNVectorReduction::Thrust:
+    reduce_exec_policy = new SUNHipThrustExecPolicy(stream);
+    break;
+  case GpuNVectorReduction::LDS:
+  default:
     reduce_exec_policy = new SUNHipBlockReduceExecPolicy(256, 0, stream);
+    break;
   }
   N_VSetKernelExecPolicy_Hip(y, stream_exec_policy, reduce_exec_policy);
 #elif defined(AMREX_USE_SYCL)
+  (void)reduction;
   N_Vector y = N_VNewWithMemHelp_Sycl(
     nvsize, false, *amrex::sundials::The_SUNMemory_Helper(),
     &amrex::Gpu::Device::streamQueue(),
@@ -96,9 +112,6 @@ setNVectorGPU(int nvsize, int atomic_reductions, amrex::gpuStream_t stream)
   N_VSetKernelExecPolicy_Sycl(y, stream_exec_policy, reduce_exec_policy);
 #endif
   return y;
-
-  delete stream_exec_policy;
-  delete reduce_exec_policy;
 }
 #endif
 } // namespace pele::physics::reactions::utils

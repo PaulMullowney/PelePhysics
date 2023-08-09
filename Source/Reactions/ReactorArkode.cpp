@@ -13,7 +13,23 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   pp.query("use_erkstep", use_erkstep);
   pp.query("rtol", relTol);
   pp.query("atol", absTol);
+#if defined(AMREX_USE_HIP)
+  int atomic_reductions = 0;
+#else
+  int atomic_reductions = 1;
+#endif
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+  int thrust_reductions = 0;
+#endif
   pp.query("atomic_reductions", atomic_reductions);
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+  pp.query("thrust_reductions", thrust_reductions);
+  m_gpu_nvec_reduction = utils::gpu_nvector_reduction_from_options(
+    atomic_reductions, thrust_reductions);
+#else
+  m_gpu_nvec_reduction =
+    utils::gpu_nvector_reduction_from_options(atomic_reductions, 0);
+#endif
   pp.query("rk_method", rk_method);
   pp.query("rk_controller", rk_controller);
   pp.query("clean_init_massfrac", m_clean_init_massfrac);
@@ -122,10 +138,17 @@ ReactorArkode::init(int reactor_type, int /*ncells*/)
   amrex::Print() << "  Using the " << controller_string << " controller"
                  << std::endl;
 
-  if (atomic_reductions != 0) {
+  switch (m_gpu_nvec_reduction) {
+  case utils::GpuNVectorReduction::Atomic:
     amrex::Print() << "  Using atomic reductions\n";
-  } else {
+    break;
+  case utils::GpuNVectorReduction::Thrust:
+    amrex::Print() << "  Using Thrust reductions\n";
+    break;
+  case utils::GpuNVectorReduction::LDS:
+  default:
     amrex::Print() << "  Using LDS reductions\n";
+    break;
   }
 
   return (0);
@@ -165,7 +188,7 @@ ReactorArkode::react(
 
   // Solution vector and execution policy
 #ifdef AMREX_USE_GPU
-  auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
+  auto y = utils::setNVectorGPU(neq_tot, m_gpu_nvec_reduction, stream);
   sunrealtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());
@@ -282,7 +305,7 @@ ReactorArkode::react(
   int neq_tot = neq * ncells;
 
 #ifdef AMREX_USE_GPU
-  auto y = utils::setNVectorGPU(neq_tot, atomic_reductions, stream);
+  auto y = utils::setNVectorGPU(neq_tot, m_gpu_nvec_reduction, stream);
   sunrealtype* yvec_d = N_VGetDeviceArrayPointer(y);
 #else
   N_Vector y = N_VNew_Serial(neq_tot, *amrex::sundials::The_Sundials_Context());

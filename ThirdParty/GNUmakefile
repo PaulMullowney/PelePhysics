@@ -70,7 +70,7 @@ endif
 
 ifeq ($(USE_HIP),TRUE)
   ifeq ($(which_computer),$(filter $(which_computer),frontier crusher))
-    ifeq ($(findstring 5.1, $(ROCM_PATH)), 5.1)
+    ifeq ($(findstring 5.0, $(ROCM_PATH)), 5.0)
       $(error Incompatible rocm version. Use >= 5.2)
     endif
   endif

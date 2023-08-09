@@ -137,11 +137,15 @@ private:
   SUNAdaptController sun_controller;
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
+  utils::GpuNVectorReduction m_gpu_nvec_reduction{
 #if defined(AMREX_USE_HIP)
-  int atomic_reductions{0};
+    utils::GpuNVectorReduction::LDS
+#elif defined(AMREX_USE_CUDA)
+    utils::GpuNVectorReduction::Atomic
 #else
-  int atomic_reductions{1};
+    utils::GpuNVectorReduction::LDS
 #endif
+  };
   bool m_clean_init_massfrac{false};
 };
 
