@@ -248,7 +248,22 @@ struct Fuego
     CKWC(T, C, WDOT);
 
     for (int n = 0; n < NUM_SPECIES; n++) {
-      WDOT[n] *= mw(n);
+      WDOT[n] *= global_mw[n];
+    }
+  }
+
+  AMREX_GPU_HOST_DEVICE
+  AMREX_FORCE_INLINE
+  static void RTY2WDOT_tmp(
+    const amrex::Real T,
+	 amrex::Real C[NUM_SPECIES],
+    amrex::Real WDOT[NUM_SPECIES])
+  {
+	 /* read massfrac from memory */
+    CKWC(T, C, WDOT);
+
+    for (int n = 0; n < NUM_SPECIES; n++) {
+      WDOT[n] *= global_mw[n];
     }
   }
 
@@ -461,7 +476,7 @@ struct Fuego
   {
     amrex::Real summ = 0.0;
     for (int i = 0; i < NUM_SPECIES; i++) {
-      summ += Y[i] * imw(i);
+      summ += Y[i] * global_imw[i];
     }
     WBAR = 1.0 / summ;
   }

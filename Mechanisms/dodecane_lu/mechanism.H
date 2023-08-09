@@ -6661,7 +6661,7 @@ CKSBMS(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 53; i++) {
-    YOW += y[i] * imw(i);
+    YOW += y[i] * global_imw[i];
   }
   // Now compute y to x conversion
   x[0] = y[0] / (170.340000 * YOW);
@@ -6906,7 +6906,7 @@ CKPY(
   amrex::Real YOW = 0; //  for computing mean MW
 
   for (int i = 0; i < 53; i++) {
-    YOW += y[i] * imw(i);
+    YOW += y[i] * global_imw[i];
   }
   P = rho * 8.31446261815324e+07 * T * YOW; // P = rho*R*T/W
 }
@@ -7058,7 +7058,7 @@ CKRHOY(
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 53; i++) {
-    YOW += y[i] * imw(i);
+    YOW += y[i] * global_imw[i];
   }
 
   rho = P / (8.31446261815324e+07 * T * YOW); // rho = P*W/(R*T)
@@ -7150,7 +7150,7 @@ CKMMWY(const amrex::Real y[], amrex::Real& wtm)
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 53; i++) {
-    YOW += y[i] * imw(i);
+    YOW += y[i] * global_imw[i];
   }
 
   wtm = 1.0 / YOW;
@@ -7318,13 +7318,13 @@ CKYTX(const amrex::Real y[], amrex::Real x[])
   amrex::Real YOW = 0;
 
   for (int i = 0; i < 53; i++) {
-    YOW += y[i] * imw(i);
+    YOW += y[i] * global_imw[i];
   }
 
   amrex::Real YOWINV = 1.0 / YOW;
 
   for (int i = 0; i < 53; i++) {
-    x[i] = y[i] * imw(i) * YOWINV;
+    x[i] = y[i] * global_imw[i] * YOWINV;
   }
 }
 
@@ -7341,7 +7341,7 @@ CKYTCP(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 53; i++) {
-    c[i] = y[i] * imw(i);
+    c[i] = y[i] * global_imw[i];
   }
   for (int i = 0; i < 53; i++) {
     YOW += c[i];
@@ -7352,7 +7352,7 @@ CKYTCP(
   // Now compute conversion
 
   for (int i = 0; i < 53; i++) {
-    c[i] = PWORT * y[i] * imw(i);
+    c[i] = PWORT * y[i] * global_imw[i];
   }
 }
 
@@ -7366,7 +7366,7 @@ CKYTCR(
 {
 
   for (int i = 0; i < 53; i++) {
-    c[i] = rho * y[i] * imw(i);
+    c[i] = rho * y[i] * global_imw[i];
   }
 }
 
@@ -7907,7 +7907,7 @@ CKUMS(const amrex::Real T, amrex::Real ums[])
   speciesInternalEnergy(ums, T);
 
   for (int i = 0; i < 53; i++) {
-    ums[i] *= RT * imw(i);
+    ums[i] *= RT * global_imw[i];
   }
 }
 
@@ -7920,7 +7920,7 @@ CKHMS(const amrex::Real T, amrex::Real hms[])
   speciesEnthalpy(hms, T);
 
   for (int i = 0; i < 53; i++) {
-    hms[i] *= RT * imw(i);
+    hms[i] *= RT * global_imw[i];
   }
 }
 
@@ -14470,7 +14470,7 @@ CKWYP(
 
   // Compute inverse of mean molecular wt first
   for (int i = 0; i < 53; i++) {
-    YOW += y[i] * imw(i);
+    YOW += y[i] * global_imw[i];
   }
   // PW/RT (see Eq. 7)
   PWORT = P / (YOW * 8.31446261815324e+07 * T);
@@ -14478,7 +14478,7 @@ CKWYP(
   PWORT *= 1e6;
   // Now compute conversion (and go to SI)
   for (int i = 0; i < 53; i++) {
-    c[i] = PWORT * y[i] * imw(i);
+    c[i] = PWORT * y[i] * global_imw[i];
   }
 
   // convert to chemkin units
@@ -14530,7 +14530,7 @@ CKWYR(
 
   // See Eq 8 with an extra 1e6 so c goes to SI
   for (int i = 0; i < 53; i++) {
-    c[i] = 1e6 * rho * y[i] * imw(i);
+    c[i] = 1e6 * rho * y[i] * global_imw[i];
   }
 
   // call productionRate
@@ -14693,7 +14693,7 @@ CKCHRGMASS(amrex::Real zk[])
   CKCHRG(kchrg);
 
   for (int id = 0; id < 53; ++id) {
-    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * imw(id);
+    zk[id] = 6.02214076e+23 * 1.60217663e-19 * kchrg[id] * global_imw[id];
   }
 }
 
