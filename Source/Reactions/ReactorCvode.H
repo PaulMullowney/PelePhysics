@@ -51,6 +51,7 @@
 #if !defined(AMREX_USE_GPU) || defined(PELE_USE_MAGMA)
 #define PELE_CVODE_FORCE_YCORDER
 #endif
+//#define AMREX_USE_HIP_DEBUG
 
 namespace pele::physics::reactions {
 
@@ -180,6 +181,8 @@ private:
   amrex::Real absTol{1e-10};
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
+  int m_cfrhs_multi_kernel{0};
+  int m_cfrhs_min_blocks{1};
 #if defined(AMREX_USE_HIP)
   int atomic_reductions{0};
 #else

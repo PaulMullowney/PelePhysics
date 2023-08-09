@@ -45,6 +45,13 @@ struct CVODEUserData
   amrex::Real* rhoe_init = nullptr; // Initial energy (rhoE for C, rhoH for LM)
   amrex::Real* rhoesrc_ext = nullptr; // External energy forcing
   amrex::Real* rYsrc_ext = nullptr;   // External species forcing
+  amrex::Real* scratch = nullptr;
+  amrex::Real* rho_pt_scratch = nullptr;
+  amrex::Real* Cv_pt_scratch = nullptr;
+  amrex::Real* temp_pt_scratch = nullptr;
+  int cfrhs_multi_kernel;
+  int cfrhs_min_blocks;
+  int fcounter;
   int* mask =
     nullptr; // Masking tagging cells where integration should not be performed
   int* FCunt = nullptr; // Number of RHS evaluations (not used on GPU)
