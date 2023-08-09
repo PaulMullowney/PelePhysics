@@ -24,6 +24,7 @@ ReactorCvode::init(int reactor_type, int /*ncells*/)
   pp.query("max_fp_accel", max_fp_accel);
   pp.query("clean_init_massfrac", m_clean_init_massfrac);
   pp.query("print_profiling", m_print_profiling);
+  pp.query("kernel", m_kernel);
 
   // Query CVODE options
   amrex::ParmParse ppcv("cvode");
@@ -925,7 +926,19 @@ ReactorCvode::allocUserData(
     amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real)));
   udata->mask =
     static_cast<int*>(amrex::The_Arena()->alloc(a_ncells * sizeof(int)));
+  udata->kernel = m_kernel;
 
+  if (m_kernel)
+  {
+	  udata->scratch = static_cast<amrex::Real*>(
+		  amrex::The_Arena()->alloc(nspec_tot * sizeof(amrex::Real)));
+	  udata->rho_pt_scratch = static_cast<amrex::Real*>(
+		  amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real)));
+	  udata->Cv_pt_scratch = static_cast<amrex::Real*>(
+		  amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real)));
+	  udata->temp_pt_scratch = static_cast<amrex::Real*>(
+		  amrex::The_Arena()->alloc(a_ncells * sizeof(amrex::Real)));
+  }
 #ifndef AMREX_USE_GPU
   udata->FCunt =
     static_cast<int*>(amrex::The_Arena()->alloc(a_ncells * sizeof(int)));
@@ -1666,11 +1679,109 @@ ReactorCvode::cF_RHS(
   auto* rhoe_init = udata->rhoe_init;
   auto* rhoesrc_ext = udata->rhoesrc_ext;
   auto* rYsrc_ext = udata->rYsrc_ext;
+  auto* scratch = udata->scratch;
+  auto* rho_pt_scratch = udata->rho_pt_scratch;
+  auto* Cv_pt_scratch = udata->Cv_pt_scratch;
+  auto* temp_pt_scratch = udata->temp_pt_scratch;
+  auto kernel = udata->kernel;
+
+  if (reactor_type != ReactorTypes::e_reactor_type && reactor_type != ReactorTypes::h_reactor_type)
+  {
+    amrex::Abort("Wrong reactor type. Choose between 1 (e) or 2 (h).");
+  }
+
+#ifdef AMREX_USE_HIP
+  auto stream = udata->stream;
+  auto nbThreads = 64;
+  auto nbBlocks = std::max(1, ncells / nbThreads);
+  const auto ec = amrex::Gpu::ExecutionConfig(ncells);
+  AMREX_ALWAYS_ASSERT(nbThreads == 64);
+  if (kernel==0)
+  {
+	  amrex::launch_global<64, 2>
+		  <<<nbBlocks, 64, ec.sharedMem, stream>>>(
+			  [=] AMREX_GPU_DEVICE() noexcept {
+				  for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+							 stride = blockDim.x * gridDim.x;
+						 icell < ncells; icell += stride) {
+					  utils::fKernelSpec<Ordering>(icell, ncells, dt_save,
+															 reactor_type, yvec_d, ydot_d,
+																 rhoe_init, rhoesrc_ext, rYsrc_ext);
+				  }
+			  });
+  }
+  else
+  {
+	  if (reactor_type == ReactorTypes::e_reactor_type) {
+		  amrex::launch_global<64, 2>
+			  <<<nbBlocks, 64, ec.sharedMem, stream>>>(
+				  [=] AMREX_GPU_DEVICE() noexcept {
+					  for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+								 stride = blockDim.x * gridDim.x;
+							 icell < ncells; icell += stride) {
+						  utils::fKernelSpecE1<Ordering>(icell, ncells, dt_save,
+																  yvec_d, rhoe_init, rhoesrc_ext,
+																  scratch, rho_pt_scratch,
+																  Cv_pt_scratch, temp_pt_scratch);
+					  }
+				  });
+	  } else {
+		  amrex::launch_global<64, 2>
+			  <<<nbBlocks, 64, ec.sharedMem, stream>>>(
+				  [=] AMREX_GPU_DEVICE() noexcept {
+					  for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+								 stride = blockDim.x * gridDim.x;
+							 icell < ncells; icell += stride) {
+						  utils::fKernelSpecH1<Ordering>(icell, ncells, dt_save,
+																  yvec_d, rhoe_init, rhoesrc_ext,
+																  scratch, rho_pt_scratch,
+																  Cv_pt_scratch, temp_pt_scratch);
+					  }
+				  });
+	  }
+
+	  /* This kernel does not depend on reactor_type */
+	  amrex::launch_global<64, 2>
+		  <<<nbBlocks, 64, ec.sharedMem, stream>>>(
+			  [=] AMREX_GPU_DEVICE() noexcept {
+				  for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+							 stride = blockDim.x * gridDim.x;
+						 icell < ncells; icell += stride) {
+					  utils::fKernelSpec2<Ordering>(icell, ncells, scratch, rho_pt_scratch,
+															  temp_pt_scratch, rYsrc_ext, ydot_d);
+				  }
+			  });
+
+	  if (reactor_type == ReactorTypes::e_reactor_type) {
+		  amrex::launch_global<64, 2>
+			  <<<nbBlocks, 64, ec.sharedMem, stream>>>(
+				  [=] AMREX_GPU_DEVICE() noexcept {
+					  for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+								 stride = blockDim.x * gridDim.x;
+							 icell < ncells; icell += stride) {
+						  utils::fKernelSpecE3<Ordering>(icell, ncells, ydot_d, rhoesrc_ext,
+																	Cv_pt_scratch, temp_pt_scratch);
+					  }
+				  });
+	  } else {
+		  amrex::launch_global<64, 2>
+			  <<<nbBlocks, 64, ec.sharedMem, stream>>>(
+				  [=] AMREX_GPU_DEVICE() noexcept {
+					  for (int icell = blockDim.x * blockIdx.x + threadIdx.x,
+								 stride = blockDim.x * gridDim.x;
+							 icell < ncells; icell += stride) {
+						  utils::fKernelSpecH3<Ordering>(icell, ncells, ydot_d, rhoesrc_ext,
+																	Cv_pt_scratch, temp_pt_scratch);
+					  }
+				  });
+	  }
+  }
+#else
   amrex::ParallelFor(ncells, [=] AMREX_GPU_DEVICE(int icell) noexcept {
-    utils::fKernelSpec<Ordering>(
-      icell, ncells, dt_save, reactor_type, yvec_d, ydot_d, rhoe_init,
-      rhoesrc_ext, rYsrc_ext);
+	  utils::fKernelSpec<Ordering>(icell, ncells, dt_save, reactor_type, yvec_d, ydot_d, rhoe_init,
+											 rhoesrc_ext, rYsrc_ext);
   });
+#endif
   amrex::Gpu::Device::streamSynchronize();
   return 0;
 }
@@ -1682,7 +1793,13 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
   amrex::The_Arena()->free(data_wk->rhoe_init);
   amrex::The_Arena()->free(data_wk->rhoesrc_ext);
   amrex::The_Arena()->free(data_wk->mask);
-
+  if (data_wk->kernel)
+  {
+	  amrex::The_Arena()->free(data_wk->scratch);
+	  amrex::The_Arena()->free(data_wk->rho_pt_scratch);
+	  amrex::The_Arena()->free(data_wk->Cv_pt_scratch);
+	  amrex::The_Arena()->free(data_wk->temp_pt_scratch);
+  }
 #ifdef AMREX_USE_GPU
 
   if (data_wk->solve_type == cvode::sparseDirect) {

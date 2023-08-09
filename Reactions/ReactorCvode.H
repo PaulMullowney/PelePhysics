@@ -50,9 +50,11 @@ class ReactorCvode : public ReactorBase::Register<ReactorCvode>
 {
 public:
   static std::string identifier() { return "ReactorCvode"; }
-
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
+  using Ordering = utils::CYOrder;
+#else
   using Ordering = utils::YCOrder;
-
+#endif
   int init(int reactor_type, int ncells) override;
 
   void close() override;
@@ -168,6 +170,7 @@ private:
   amrex::Real absTol{1e-10};
   utils::FlattenOps<Ordering> flatten_ops;
   int m_reactor_type{0};
+  int m_kernel{0};
 #if defined(AMREX_USE_HIP)
   int atomic_reductions{0};
 #else
