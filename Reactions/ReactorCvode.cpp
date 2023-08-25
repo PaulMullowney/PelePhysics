@@ -927,7 +927,6 @@ ReactorCvode::allocUserData(
   udata->mask =
     static_cast<int*>(amrex::The_Arena()->alloc(a_ncells * sizeof(int)));
   udata->kernel = m_kernel;
-
   if (m_kernel)
   {
 	  udata->scratch = static_cast<amrex::Real*>(
@@ -1453,7 +1452,6 @@ ReactorCvode::react(
     SUNMatDestroy(A);
   }
   freeUserData(udata);
-
   return static_cast<int>(nfe);
 }
 
@@ -1653,7 +1651,6 @@ ReactorCvode::react(
     SUNMatDestroy(A);
   }
   freeUserData(udata);
-
   return static_cast<int>(nfe);
 }
 
@@ -1691,6 +1688,78 @@ ReactorCvode::cF_RHS(
   }
 
 #ifdef AMREX_USE_HIP
+
+#ifdef AMREX_USE_HIP_DEBUG
+  std::string name;
+  if (NUM_SPECIES==9) name="LiDryer";
+  else if (NUM_SPECIES==53) name="dodecane_lu";
+  else name="drm19";
+  int fcounter=0;
+  {
+	  FILE * fid;
+	  char fname[100];
+	  sprintf(fname,"%s/%s_metadata_%d.csv",name.c_str(),name.c_str(),amrex::ParallelContext::MyProcSub());
+	  std::ifstream infile(fname);
+	  if (infile.good())
+	  {
+		  std::string line;
+		  while (std::getline(infile, line))
+			  ++fcounter;
+
+		  fcounter--;
+		  fid = fopen(fname,"at");
+		  fprintf(fid,"%d, %1.15g, %d\n",fcounter,dt_save,ncells);
+		  fclose(fid);
+	  }
+	  else
+	  {
+		  fid = fopen(fname,"wt");
+		  fprintf(fid,"file counter, dt_save, ncells\n");
+		  fprintf(fid,"%d, %1.15g, %d\n",fcounter,dt_save,ncells);
+		  fclose(fid);
+	  }
+  }
+
+  {
+	  std::vector<amrex::Real> temp((NUM_SPECIES + 1) * ncells);
+	  amrex::Gpu::dtoh_memcpy(temp.data(), yvec_d, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * ncells));
+	  char fname[100];
+	  sprintf(fname,"%s/%s_yvec_d_rank_%d_%d.bin",name.c_str(),name.c_str(),amrex::ParallelContext::MyProcSub(),fcounter);
+	  FILE * fid = fopen(fname,"wb");
+	  fwrite(temp.data(), sizeof(amrex::Real), (NUM_SPECIES + 1) * ncells, fid);
+	  fclose(fid);
+  }
+  {
+	  std::vector<amrex::Real> temp(ncells);
+	  amrex::Gpu::dtoh_memcpy(temp.data(), rhoe_init, sizeof(amrex::Real) * ncells);
+	  char fname[100];
+	  sprintf(fname,"%s/%s_rhoe_init_rank_%d_%d.bin",name.c_str(),name.c_str(),amrex::ParallelContext::MyProcSub(),fcounter);
+	  FILE * fid = fopen(fname,"wb");
+	  fwrite(temp.data(), sizeof(amrex::Real), ncells, fid);
+	  fclose(fid);
+  }
+  {
+	  std::vector<amrex::Real> temp(ncells);
+	  amrex::Gpu::dtoh_memcpy(temp.data(), rhoesrc_ext, sizeof(amrex::Real) * ncells);
+	  char fname[100];
+	  sprintf(fname,"%s/%s_rhoesrc_ext_rank_%d_%d.bin",name.c_str(),name.c_str(),amrex::ParallelContext::MyProcSub(),fcounter);
+	  FILE * fid = fopen(fname,"wb");
+	  fwrite(temp.data(), sizeof(amrex::Real), ncells, fid);
+	  fclose(fid);
+  }
+  {
+	  std::vector<amrex::Real> temp(ncells*NUM_SPECIES);
+	  amrex::Gpu::dtoh_memcpy(temp.data(), rYsrc_ext, sizeof(amrex::Real) * ncells*NUM_SPECIES);
+	  char fname[100];
+	  sprintf(fname,"%s/%s_rYsrc_ext_rank_%d_%d.bin",name.c_str(),name.c_str(),amrex::ParallelContext::MyProcSub(),fcounter);
+	  FILE * fid = fopen(fname,"wb");
+	  fwrite(temp.data(), sizeof(amrex::Real), ncells*NUM_SPECIES, fid);
+	  fclose(fid);
+  }
+  amrex::Gpu::Device::streamSynchronize();
+
+#endif
+
   auto stream = udata->stream;
   auto nbThreads = 64;
   auto nbBlocks = std::max(1, ncells / nbThreads);
@@ -1706,7 +1775,7 @@ ReactorCvode::cF_RHS(
 						 icell < ncells; icell += stride) {
 					  utils::fKernelSpec<Ordering>(icell, ncells, dt_save,
 															 reactor_type, yvec_d, ydot_d,
-																 rhoe_init, rhoesrc_ext, rYsrc_ext);
+															 rhoe_init, rhoesrc_ext, rYsrc_ext);
 				  }
 			  });
   }
@@ -1783,6 +1852,17 @@ ReactorCvode::cF_RHS(
   });
 #endif
   amrex::Gpu::Device::streamSynchronize();
+#ifdef AMREX_USE_HIP_DEBUG
+  {
+	  std::vector<amrex::Real> temp((NUM_SPECIES + 1) * ncells);
+	  amrex::Gpu::dtoh_memcpy(temp.data(), ydot_d, sizeof(amrex::Real) * ((NUM_SPECIES + 1) * ncells));
+	  char fname[100];
+	  sprintf(fname,"%s/%s_ydot_d_rank_%d_%d.bin",name.c_str(),name.c_str(),amrex::ParallelContext::MyProcSub(),fcounter);
+	  FILE * fid = fopen(fname,"wb");
+	  fwrite(temp.data(), sizeof(amrex::Real), (NUM_SPECIES + 1) * ncells, fid);
+	  fclose(fid);
+  }
+#endif
   return 0;
 }
 
@@ -1800,6 +1880,7 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
 	  amrex::The_Arena()->free(data_wk->Cv_pt_scratch);
 	  amrex::The_Arena()->free(data_wk->temp_pt_scratch);
   }
+
 #ifdef AMREX_USE_GPU
 
   if (data_wk->solve_type == cvode::sparseDirect) {
@@ -1898,9 +1979,9 @@ ReactorCvode::freeUserData(CVODEUserData* data_wk)
     delete[] data_wk->PS;
     delete[] data_wk->JSPSmat;
   }
-
   delete data_wk;
 #endif
+  return;
 }
 
 void

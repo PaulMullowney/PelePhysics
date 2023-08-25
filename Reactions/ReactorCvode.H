@@ -44,6 +44,8 @@
 #include <sunlinsol/sunlinsol_cusolversp_batchqr.h>
 #endif
 
+//#define AMREX_USE_HIP_DEBUG
+
 namespace pele::physics::reactions {
 
 class ReactorCvode : public ReactorBase::Register<ReactorCvode>

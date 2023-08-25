@@ -50,6 +50,7 @@ struct CVODEUserData
   amrex::Real* Cv_pt_scratch = nullptr;
   amrex::Real* temp_pt_scratch = nullptr;
   int kernel;
+  int fcounter;
   int* mask =
     nullptr; // Masking tagging cells where integration should not be perfomed
   int* FCunt = nullptr; // Number of RHS evaluations (not used on GPU)
