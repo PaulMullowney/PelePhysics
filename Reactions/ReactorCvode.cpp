@@ -2,6 +2,33 @@
 
 #include <iostream>
 
+#include <thrust/count.h>
+#include <thrust/execution_policy.h>
+
+template<typename T>
+struct is_bad
+{
+      __host__ __device__
+      bool operator()(const T &x)
+  {
+    return isinf(x) || isnan(x);
+  }
+};
+
+void checkBuffer(const amrex::Real * X, const size_t N, const std::string name,
+		 const char * FILE, const char * FUNCTION, const int LINE,
+		 bool& hasBadValues)
+{
+  auto numBad = thrust::count_if(thrust::device.on(amrex::Gpu::gpuStream()), X, X+N, is_bad<amrex::Real>());
+  if (numBad)
+    {
+      amrex::Print() << "rank=" << amrex::ParallelContext::MyProcSub() << FILE << "::"
+	                    << FUNCTION << "::L#" << LINE << " : " << name << " has " << numBad << " BAD (thrust reduction) values out of " << N << std::endl;
+      amrex::Abort("Exiting");
+    }
+}
+
+
 namespace pele::physics::reactions {
 
 int
@@ -1852,6 +1879,11 @@ ReactorCvode::cF_RHS(
   amrex::Gpu::Device::streamSynchronize();
 
 #endif
+  bool hasBadValues=false;
+  checkBuffer(yvec_d, (NUM_SPECIES + 1) * ncells, "yvec_d", __FILE__, __FUNCTION__, __LINE__, hasBadValues);
+  checkBuffer(rhoe_init, ncells, "rhoe_init", __FILE__, __FUNCTION__, __LINE__, hasBadValues);
+  checkBuffer(rhoesrc_ext, ncells, "rhoesrc_ext", __FILE__, __FUNCTION__, __LINE__, hasBadValues);
+  checkBuffer(rYsrc_ext, ncells*NUM_SPECIES, "rYsrc_ext", __FILE__, __FUNCTION__, __LINE__, hasBadValues);
 
   auto stream = udata->stream;
   auto nbThreads = 64;
@@ -1915,6 +1947,7 @@ ReactorCvode::cF_RHS(
     fclose(fid);
   }
 #endif
+  checkBuffer(ydot_d, ((NUM_SPECIES + 1) * ncells), "ydot_d", __FILE__, __FUNCTION__, __LINE__, hasBadValues);
   return 0;
 }
 
